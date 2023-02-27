@@ -1,21 +1,12 @@
 import streamlit as st # web development
 st.set_page_config(page_title="Job Automation", page_icon="gear.png", layout="wide")
-import numpy as np # np mean, np random 
 import pandas as pd # read csv, df manipulation
-import time # to simulate a real time data, time loop 
-# import plotly.express as px # interactive charts 
-import snowflake.connector
 from utils import sql as sql
 import os
 import functions as fn
-# from pathlib import Path
-# import tempfile
 from PIL import Image
 from st_aggrid import AgGrid,GridUpdateMode,DataReturnMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-# from snowflake.connector.pandas_tools import pd_writer
-#from streamlit_extras.switch_page_button import switch_page
-#import Network_Health as NW
 
 with st.container():
     cola,colb=st.columns([1,4])

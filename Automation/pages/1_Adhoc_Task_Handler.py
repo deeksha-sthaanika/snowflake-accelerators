@@ -1,22 +1,10 @@
 import streamlit as st
-st.set_page_config(page_title="Adhoc Jobs", page_icon="gear.png", layout="wide")
+st.set_page_config(page_title="Adhoc Task Handler", page_icon="gear.png", layout="wide")
 import pandas as pd
 import os
-# import altair as alt
-# import numpy as np
-# import plotly.graph_objects as go
-# from plotly.validators.scatter.marker import SymbolValidator
-# import plotly.figure_factory as ff
-# import datetime as dt
-# from dateutil.relativedelta import relativedelta # to add days or years
-# from plotly.subplots import make_subplots
-# import plotly.express as px
-# from datetime import timedelta
-# # from utils import snowflake_connector as sf
 from utils import sql as sql
 import functions as fn
 import gzip
-# # from numerize import numerize
 from PIL import Image
 from st_aggrid import AgGrid,GridUpdateMode,DataReturnMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
