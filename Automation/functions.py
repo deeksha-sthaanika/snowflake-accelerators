@@ -5,18 +5,11 @@ Created on Mon Nov 28 18:35:35 2022
 @author: deeksha.bs
 """
 import snowflake.connector
-from snowflake.snowpark.session import Session
-
 import pandas as pd
 import streamlit as st
 from snowflake.connector import connect
 from snowflake.connector.connection import SnowflakeConnection
 from snowflake.connector.pandas_tools import write_pandas
-# from snowflake.connector.pandas_tools import pd_writer
-# from snowflake.sqlalchemy import create_engine
-# from types import *
-# from sqlalchemy.dialects import registry
-# from snowflake.snowpark.functions import avg, sum, col,lit
 import numpy as np
 import streamlit as st
 import json
@@ -28,37 +21,7 @@ import sys
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Any, Dict
-# from utils import snowflake_connector as sf
-
-
-
 from utils import sql
-
-# registry.register('snowflake', 'snowflake.sqlalchemy', 'dialect')
-# st.session_state.password_ip=""
-# st.session_state.usrname=""
-# st.session_state.account=""
-
-# @st.experimental_singleton(show_spinner=False)
-# def create_session():
-#     if "snowpark_session" not in st.session_state:
-#         session = Session.builder.configs(st.secrets["sf_usage_app"]).create()
-#         st.session_state['snowpark_session'] = session
-#     else:
-#         session = st.session_state['snowpark_session']
-#     return session
-
-# session=create_session()
-
-# TIME_TO_LIVE = 60 * 60 * 6  # 6 hours caching
-
-# st.write("importing function")
-# st.write("Function state",st.session_state)
-# Share the connector across all users connected to the app
-# if st.session_state.usrname=='' or st.session_state.password_ip=='' or st.session_state.account=='':
-#     st.session_state.usrname=' '
-#     st.session_state.password_ip=' '
-#     st.session_state.account=' '
 
 @st.experimental_singleton(show_spinner=False)
 def get_connector(
@@ -85,13 +48,6 @@ def get_connector(
     connector = connect(**params)
     return connector
 
-# if st.session_state.usrname and st.session_state.password_ip and st.session_state.account:  
-# snowflake_connector = get_connector(   
-#     secrets_key="sf_usage_app",  
-#     input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
-#     use_browser=False,)
-
-# snow_eng=create_engine(f"snowflake://{st.session_state.usrname}:{st.session_state.password_ip}@{st.session_state.account}").connect()
 
 @st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=60*60,
 def dataframe_sql_to(df,db,schema,table_name):

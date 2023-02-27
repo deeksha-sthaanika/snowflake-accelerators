@@ -1,6 +1,4 @@
 import streamlit as st
-import streamlit_book as stb
-from typing import Any, Dict
 from snowflake.connector import connect
 from snowflake.connector.connection import SnowflakeConnection
 from utils import sql as sql

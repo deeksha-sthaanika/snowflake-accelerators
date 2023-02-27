@@ -1,17 +1,11 @@
 import streamlit as st # web development
+st.set_page_config(page_title="Data Profiler", page_icon="gear.png", layout="wide")
 import numpy as np # np mean, np random 
 import pandas as pd # read csv, df manipulation
-import time # to simulate a real time data, time loop 
-# import plotly.express as px # interactive charts 
-import snowflake.connector
 from utils import sql as sql
 import functions as fn
-import os
-import pandas as pd 
 import ydata_profiling as pp
 from ydata_profiling import compare
-# from pandas_profiling import ProfileReport
-# from json2html import *
 import json
 from streamlit_pandas_profiling import st_profile_report
 import streamlit.components.v1 as components
