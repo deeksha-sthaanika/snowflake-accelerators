@@ -23,7 +23,7 @@ from plotly.subplots import make_subplots
 from typing import Any, Dict
 from utils import sql
 
-@st.experimental_singleton(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def get_connector(
     secrets_key: str = "snowflake",
     input_params: Dict[str, Any] = None,
@@ -49,7 +49,7 @@ def get_connector(
     return connector
 
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=60*60,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
 def dataframe_sql_to(df,db,schema,table_name):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
@@ -68,7 +68,7 @@ def dataframe_sql_to(df,db,schema,table_name):
     )
 
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=60*60,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
 def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
@@ -80,37 +80,37 @@ def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
     # st.write(st.session_state)
     return data
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=60*60,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
 def get_model_run_date(query):
     df = sql_to_dataframe(query)
     return df
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=1,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
 def get_query_2(query,arg2):
     df = sql_to_dataframe(
         query.format(arg2=arg2))
     return df
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=1,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
 def get_query_3(query,arg2,arg3):
     df = sql_to_dataframe(
         query.format(arg2=arg2,arg3=arg3))
     return df
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)#ttl=1,
+@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
 def get_query_4(query,arg2,arg3,arg4):
     df = sql_to_dataframe(
         query.format(arg2=arg2,arg3=arg3,arg4=arg4))
     return df
 
-@st.experimental_singleton(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def init_connection():
     return snowflake.connector.connect(
      **st.secrets["snowflake"], client_session_keep_alive=True
     ) 
 
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)
+@st.cache_data(ttl=60*60,show_spinner=False)
 def proc_call(sql_query: str):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
@@ -119,7 +119,7 @@ def proc_call(sql_query: str):
     cursor=snowflake_connector.cursor()
     cursor.execute_async(sql_query)
 
-@st.experimental_memo(ttl=60*60,show_spinner=False)
+@st.cache_data(ttl=60*60,show_spinner=False)
 def runquery(sql_query: str):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
