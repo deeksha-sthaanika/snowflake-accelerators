@@ -143,24 +143,24 @@ try:
         
         if st.session_state.success_param:
             ROLE=sql.ROLE
-            df_role=fn.get_model_run_date(ROLE)
+            df_role=fn.get_query_data(ROLE,st.session_state.usrname)
             if 'role' not in st.session_state:
                 role=st.sidebar.selectbox("Select Role",df_role["role"],key='role')
             else:    
                 role=st.sidebar.selectbox("Select Role",df_role["role"],index=list(df_role["role"]).index(st.session_state.role),key='role')
             
             WAREHOUSE=sql.WAREHOUSE
-            df_warehouse=fn.get_model_run_date(WAREHOUSE)
+            df_warehouse=fn.get_query_data(WAREHOUSE,st.session_state.usrname)
             wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["name"],key='s2')
             
-            USE_ROLE=sql.USE_ROLE
-            df=fn.get_query_2(USE_ROLE,role)
+            USE_ROLE=sql.USE_ROLE.format(arg2=role)
+            df=fn.get_query_data(USE_ROLE,st.session_state.usrname)
             
-            USE_WAREHOUSE=sql.USE_WAREHOUSE
-            df=fn.get_query_2(USE_WAREHOUSE,wh)
+            USE_WAREHOUSE=sql.USE_WAREHOUSE.format(arg2=wh)
+            df=fn.get_query_data(USE_WAREHOUSE,st.session_state.usrname)
 
             TABLE=sql.TABLE
-            df_table=fn.get_model_run_date(TABLE)
+            df_table=fn.get_query_data(TABLE,st.session_state.usrname)
 
             df_table=df_table[df_table["owner"]!='']
 
@@ -174,8 +174,8 @@ try:
 
             table_name=db+"."+sch+"."+table_sel
 
-            COLUMNS=sql.COLUMNS
-            df_cols=fn.get_query_4(COLUMNS,db,sch,table_sel)
+            COLUMNS=sql.COLUMNS.format(arg2=db,arg3=sch,arg4=table_sel)
+            df_cols=fn.get_query_data(COLUMNS,st.session_state.usrname)
 
 
             st.sidebar.markdown("<p style='margin-bottom: 15px;'><b>Select Columns to profile:</b></p>", unsafe_allow_html=True) 
@@ -269,7 +269,7 @@ try:
                 # else:
                 PROFILE=sql.PROFILE_SINGLE.format(arg2=table_name,arg3=sample_sel,arg4=cols_sel_str,arg5=cols_sel_interaction,arg6=sensitive,arg7=minimal)
 
-                df_profile =fn.runquery(PROFILE)
+                df_profile =fn.runquery(PROFILE,st.session_state.usrname)
                 # st.write(df_profile)
                 print("Total rows are:  ", len(df_profile))
                 print("Printing each row")
@@ -287,3 +287,5 @@ try:
         st.warning("Please login to access this page")
 except AttributeError:
     st.warning("Please login to access this page")
+
+

@@ -134,35 +134,35 @@ try:
                     f.write(uploadedfile.getbuffer())
 
             def put_file_in_stage(file_nm, stage_nm) -> bool:
-                PUT_FILE=sql.PUT_FILE
-                df_stage=fn.get_query_3(PUT_FILE,file_nm,stage_nm)
+                PUT_FILE=sql.PUT_FILE.format(arg2=file_nm,arg3=stage_nm)
+                df_stage=fn.get_query_data(PUT_FILE,st.session_state.usrname)
 
             ROLE=sql.ROLE
-            df_role=fn.get_model_run_date(ROLE)
+            df_role=fn.get_query_data(ROLE,st.session_state.usrname)
             if 'role' not in st.session_state:
                 role=st.sidebar.selectbox("Select Role",df_role["role"],key='role')
             else:    
                 role=st.sidebar.selectbox("Select Role",df_role["role"],index=list(df_role["role"]).index(st.session_state.role),key='role')
             
             WAREHOUSE=sql.WAREHOUSE
-            df_warehouse=fn.get_model_run_date(WAREHOUSE)
+            df_warehouse=fn.get_query_data(WAREHOUSE,st.session_state.usrname)
             wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["name"],key='s2')
             
-            USE_ROLE=sql.USE_ROLE
-            df=fn.get_query_2(USE_ROLE,role)
+            USE_ROLE=sql.USE_ROLE.format(arg2=role)
+            df=fn.get_query_data(USE_ROLE,st.session_state.usrname)
             
-            USE_WAREHOUSE=sql.USE_WAREHOUSE
-            df=fn.get_query_2(USE_WAREHOUSE,wh)
+            USE_WAREHOUSE=sql.USE_WAREHOUSE.format(arg2=wh)
+            df=fn.get_query_data(USE_WAREHOUSE,st.session_state.usrname)
 
             USE_DATABASE=sql.USE_DATABASE
-            df=fn.get_model_run_date(USE_DATABASE)
+            df=fn.get_query_data(USE_DATABASE,st.session_state.usrname)
 
             USE_SCHEMA_NAME=sql.USE_SCHEMA_NAME
-            df=fn.get_model_run_date(USE_SCHEMA_NAME)
+            df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
             
             # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
             SCRIPT_NAME=sql.SCRIPT_NAME
-            df_scripts=fn.get_model_run_date(SCRIPT_NAME)
+            df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
             df_scripts["CONTINUE_ON_ERROR"]=df_scripts["CONTINUE_ON_ERROR"].astype(str)
 
@@ -187,8 +187,8 @@ try:
                     else:
                         runid=st.number_input("Sequence Id",st.session_state.q_rid,key='q_run',min_value=1,step=1)
                     
-                    SEQ_ID=sql.SEQ_ID
-                    df_runid=fn.get_query_2(SEQ_ID,jobname)
+                    SEQ_ID=sql.SEQ_ID.format(arg2=jobname)
+                    df_runid=fn.get_query_data(SEQ_ID,st.session_state.usrname)
                     run_lst=list(df_runid["SEQ_ID"])
 
                     if runid in run_lst:
@@ -199,7 +199,7 @@ try:
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
-                            df_stage=fn.get_model_run_date(STAGE)
+                            df_stage=fn.get_query_data(STAGE,st.session_state.usrname)
                             stage=st.selectbox("Staging Area ",df_stage["name"])
 
                             if 'file' not in st.session_state:
@@ -233,8 +233,8 @@ try:
                                     #     colname="JOB_ID,SCRIPT_NAME,RUN_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
                                     #     val=str(jobid)+",'"+jobname+"',"+str(runid)+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
 
-                                    INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT
-                                    df_insert=fn.get_query_3(INSERT_JOB_SCRIPT,colname,val)
+                                    INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg2=colname,arg3=val)
+                                    df_insert=fn.get_query_data(INSERT_JOB_SCRIPT,st.session_state.usrname)
 
                                     st.success("Succesfully Inserted")
                                 else:
@@ -249,8 +249,8 @@ try:
                                 #     colname="JOB_ID,SCRIPT_NAME,RUN_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
                                 #     val=str(jobid)+",'"+jobname+"',"+str(runid)+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
 
-                                INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT
-                                df_insert=fn.get_query_3(INSERT_JOB_SCRIPT,colname,val)
+                                INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg2=colname,arg3=val)
+                                df_insert=fn.get_query_data(INSERT_JOB_SCRIPT,st.session_state.usrname)
 
                                 st.success("Succesfully Inserted")
                         else:
@@ -268,7 +268,7 @@ try:
                         load_file=st.button("Load File")
                         if load_file:
                             try:
-                                fn.dataframe_sql_to(df,'SNDBX_DEMO_DB','DEMO_WORK_INTERIM','JOB_SCRIPTS')
+                                fn.dataframe_sql_to(df,'SNDBX_DEMO_DB','DEMO_WORK_INTERIM','JOB_SCRIPTS',st.session_state.usrname)
                                 st.write("File Uploaded")
                             except:
                                 st.write("Please upload file")
@@ -317,7 +317,7 @@ try:
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
-                            df_stage=fn.get_model_run_date(STAGE)
+                            df_stage=fn.get_query_data(STAGE,st.session_state.usrname)
                             stage=st.selectbox("Staging Area:",df_stage["name"])
 
                             if 'file1' not in st.session_state:
@@ -346,8 +346,8 @@ try:
                                             # val=jobid+",'"+jobname+"',"+runid+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
                                             set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='@"+stage+"/"+uploaded_file.name+".gz',"+"CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
                                             
-                                            UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT
-                                            df_insert=fn.get_query_3(UPDATE_JOB_SCRIPT,set_val,update_filter) 
+                                            UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg2=set_val,arg3=update_filter)
+                                            df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
                                             st.success("Updated Successfully")
                                         else:
                                             st.warning('Please upload a file')
@@ -356,11 +356,11 @@ try:
                                         # val=jobid+",'"+jobname+"',"+runid+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
                                         set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='"+sql_input+"',CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
                                         
-                                        UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT
-                                        df_insert=fn.get_query_3(UPDATE_JOB_SCRIPT,set_val,update_filter) 
+                                        UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg2=set_val,arg3=update_filter)
+                                        df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
                                         st.success("Updated Successfully")
                                         # SCRIPT_NAME=sql.SCRIPT_NAME
-                                        # df_scripts=fn.get_model_run_date(SCRIPT_NAME)
+                                        # df_scripts=fn.get_query_data(SCRIPT_NAME)
                                 else:
                                     st.error("Sequence Id Exists")
                             else:
@@ -387,15 +387,15 @@ try:
                             update_filter="SCRIPT_NAME='"+df_sel_rows["SCRIPT_NAME"].iloc[0]+"' AND SEQ_ID="+str(df_sel_rows["SEQ_ID"].iloc[0]) 
                             #or st.session_state.delete_btn:
                             # st.session_state.delete_btn=True
-                            DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT
-                            df_insert=fn.get_query_2(DELETE_JOB_SCRIPT,update_filter) 
+                            DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg2=update_filter)
+                            df_insert=fn.get_query_data(DELETE_JOB_SCRIPT,st.session_state.usrname) 
                             st.success("Deleted Successfully")
             with tab3:
                 # st.write("WIP") 
                 st.subheader("Create Tasks")
 
                 TASK=sql.TASK
-                df_task=fn.get_model_run_date(TASK)
+                df_task=fn.get_query_data(TASK,st.session_state.usrname)
                 df_task.columns = df_task.columns.str.upper()
 
                 # st.write(df_task)
@@ -462,17 +462,17 @@ try:
                         if task_name and ((runid_sel and script_selected) or sql_input_task):
                             try:
                                 if parent:               
-                                    CREATE_PARENT_TASK=sql.CREATE_PARENT_TASK
-                                    df_create_task=fn.get_query_4(CREATE_PARENT_TASK,val,sch,STORED_PROC_RUN_ID_ARR)
+                                    CREATE_PARENT_TASK=sql.CREATE_PARENT_TASK.format(arg2=val,arg3=sch,arg4=STORED_PROC_RUN_ID_ARR)
+                                    df_create_task=fn.get_query_data(CREATE_PARENT_TASK,st.session_state.usrname)
 
-                                    RESUME_TASK=sql.RESUME_TASK
-                                    df_resume_task=fn.get_query_2(RESUME_TASK,task_name)
+                                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                                    df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
                                 else:
-                                    CREATE_CHILD_TASK=sql.CREATE_CHILD_TASK
-                                    df_create_task=fn.get_query_4(CREATE_CHILD_TASK,val,child_task,STORED_PROC_RUN_ID_ARR)
+                                    CREATE_CHILD_TASK=sql.CREATE_CHILD_TASK.format(arg2=val,arg3=child_task,arg4=STORED_PROC_RUN_ID_ARR)
+                                    df_create_task=fn.get_query_data(CREATE_CHILD_TASK,st.session_state.usrname)
 
-                                    RESUME_TASK=sql.RESUME_TASK
-                                    df_resume_task=fn.get_query_2(RESUME_TASK,task_name)
+                                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                                    df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
                                 st.success(task_name+" created successfully")
                             except Exception as e:  
                                 st.error(e)
