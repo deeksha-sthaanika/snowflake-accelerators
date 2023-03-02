@@ -252,7 +252,7 @@ try:
                 STAGE_NAME=sql.STAGE_NAME
                 df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
                 # st.write(df_stage_name)
-                df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOB')]
+                df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
                 sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
 
