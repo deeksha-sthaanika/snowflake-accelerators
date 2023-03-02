@@ -49,8 +49,8 @@ def get_connector(
     return connector
 
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
-def dataframe_sql_to(df,db,schema,table_name):
+@st.cache_data(ttl=10,show_spinner=False)#ttl=60*60,
+def dataframe_sql_to(df,db,schema,table_name,usrname):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
     input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
@@ -68,8 +68,8 @@ def dataframe_sql_to(df,db,schema,table_name):
     )
 
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
-def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
+@st.cache_data(ttl=10,show_spinner=False)#ttl=60*60,
+def sql_to_dataframe(sql_query: str,usrname) -> pd.DataFrame:
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
     input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
@@ -80,28 +80,33 @@ def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
     # st.write(st.session_state)
     return data
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
-def get_model_run_date(query):
-    df = sql_to_dataframe(query)
+@st.cache_data(ttl=10,show_spinner=False)#ttl=60*60,
+def get_query_data(query,usrname):
+    df = sql_to_dataframe(query,usrname)
     return df
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-def get_query_2(query,arg2):
-    df = sql_to_dataframe(
-        query.format(arg2=arg2))
-    return df
+# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
+# def get_model_run_date(query,usrname):
+#     df = sql_to_dataframe(query,usrname)
+#     return df
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-def get_query_3(query,arg2,arg3):
-    df = sql_to_dataframe(
-        query.format(arg2=arg2,arg3=arg3))
-    return df
+# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
+# def get_query_2(query,arg2,usrname):
+#     df = sql_to_dataframe(
+#         query.format(arg2=arg2),st.session_state.usrname)
+#     return df
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-def get_query_4(query,arg2,arg3,arg4):
-    df = sql_to_dataframe(
-        query.format(arg2=arg2,arg3=arg3,arg4=arg4))
-    return df
+# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
+# def get_query_3(query,arg2,arg3,usrname):
+#     df = sql_to_dataframe(
+#         query.format(arg2=arg2,arg3=arg3),st.session_state.usrname)
+#     return df
+
+# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
+# def get_query_4(query,arg2,arg3,arg4,usrname):
+#     df = sql_to_dataframe(
+#         query.format(arg2=arg2,arg3=arg3,arg4=arg4),st.session_state.usrname)
+#     return df
 
 @st.cache_resource(show_spinner=False)
 def init_connection():
@@ -111,7 +116,7 @@ def init_connection():
 
 
 @st.cache_data(ttl=60*60,show_spinner=False)
-def proc_call(sql_query: str):
+def proc_call(sql_query: str,usrname):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
     input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
@@ -120,7 +125,7 @@ def proc_call(sql_query: str):
     cursor.execute_async(sql_query)
 
 @st.cache_data(ttl=60*60,show_spinner=False)
-def runquery(sql_query: str):
+def runquery(sql_query: str,usrname):
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
     input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role

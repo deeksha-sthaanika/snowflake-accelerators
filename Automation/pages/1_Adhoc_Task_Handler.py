@@ -142,32 +142,32 @@ try:
         
         if st.session_state.success_param:
             ROLE=sql.ROLE
-            df_role=fn.get_model_run_date(ROLE)
+            df_role=fn.get_query_data(ROLE,st.session_state.usrname)
             if 'role' not in st.session_state:
                 role=st.sidebar.selectbox("Select Role",df_role["role"],key='role')
             else:    
                 role=st.sidebar.selectbox("Select Role",df_role["role"],index=list(df_role["role"]).index(st.session_state.role),key='role')
             
             WAREHOUSE=sql.WAREHOUSE
-            df_warehouse=fn.get_model_run_date(WAREHOUSE)
+            df_warehouse=fn.get_query_data(WAREHOUSE,st.session_state.usrname)
             wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["name"],key='s2')
             
-            USE_ROLE=sql.USE_ROLE
-            df=fn.get_query_2(USE_ROLE,role)
+            USE_ROLE=sql.USE_ROLE.format(arg2=role)
+            df=fn.get_query_data(USE_ROLE,st.session_state.usrname)
             
-            USE_WAREHOUSE=sql.USE_WAREHOUSE
-            df=fn.get_query_2(USE_WAREHOUSE,wh)
+            USE_WAREHOUSE=sql.USE_WAREHOUSE.format(arg2=wh)
+            df=fn.get_query_data(USE_WAREHOUSE,st.session_state.usrname)
                      
             USE_DATABASE=sql.USE_DATABASE
-            df=fn.get_model_run_date(USE_DATABASE)
+            df=fn.get_query_data(USE_DATABASE,st.session_state.usrname)
 
             USE_SCHEMA_NAME=sql.USE_SCHEMA_NAME
-            df=fn.get_model_run_date(USE_SCHEMA_NAME)
+            df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
 
             tab1,tab3,tab2 = st.tabs(["RUN JOB","AUDIT JOB LOGS","STAGE JOB FILES"])
             with tab1:
                 SCRIPT_NAME=sql.SCRIPT_NAME
-                script_name=fn.get_model_run_date(SCRIPT_NAME)
+                script_name=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
                 c1,c2,c3,c4=st.columns([2,2,1,1])
                 with c2:
@@ -218,12 +218,12 @@ try:
 
                 if execute_btn_sr or execute:
                     BATCH_ID_SEQ=sql.BATCH_ID_SEQ
-                    df_batch_id=fn.get_model_run_date(BATCH_ID_SEQ)
+                    df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     if runid_all:
-                        STORED_PROC=sql.STORED_PROC
+                        STORED_PROC=sql.STORED_PROC.format(arg2=script_selected,arg3=batch_id)
                         with st.spinner("Executing script in Snowflake"):
-                            df=fn.get_query_3(STORED_PROC,script_selected,batch_id)
+                            df=fn.get_query_data(STORED_PROC,st.session_state.usrname)
                             st.write("Executed "+script_selected)
                             st.info(df["SP_JOB_SCRIPT"][0])             
                     else:
@@ -231,17 +231,17 @@ try:
                     
                         STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg2=script_selected,arg3=runid_sel,arg4=batch_id)
                         with st.spinner("Executing script in Snowflake"):
-                            df=fn.get_query_3(STORED_PROC_RUN_ID_ARR,script_selected,runid_sel)
+                            df=fn.get_query_data(STORED_PROC_RUN_ID_ARR,st.session_state.usrname)
                             #st.write(df)
                             st.write("Executed "+script_selected)
                             st.info(df["SP_JOB_SCRIPT"][0])
                 if execute_btn_prl:
                     BATCH_ID_SEQ=sql.BATCH_ID_SEQ
-                    df_batch_id=fn.get_model_run_date(BATCH_ID_SEQ)
+                    df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     for i in runid_sel:
                         STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg2=script_selected,arg3=i,arg4=batch_id)
-                        fn.proc_call(STORED_PROC_RUN_ID)
+                        fn.proc_call(STORED_PROC_RUN_ID,st.session_state.usrname)
                         #st.write(df)
                     # st.write("Executed "+script_selected+" with run id "+str(i))
                     st.info("Executed "+script_selected+" with selected Sequence ids "+" in parallel. Please check the audit table for logs")
@@ -250,7 +250,9 @@ try:
                 c1,c2,c3=st.columns([2,2,2])
 
                 STAGE_NAME=sql.STAGE_NAME
-                df_stage_name=fn.get_model_run_date(STAGE_NAME)
+                df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
+                # st.write(df_stage_name)
+                df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
                 sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
 
@@ -261,8 +263,8 @@ try:
                 selc_stage=c3.selectbox("Select Stage",df_schema["name"],key='s5')
                 db_schema_stage=sel_db+"."+sel_schema+"."+selc_stage
 
-                STAGE_FILES=sql.STAGE_FILES
-                df_stage_files=fn.get_query_2(STAGE_FILES,db_schema_stage)
+                STAGE_FILES=sql.STAGE_FILES.format(arg2=db_schema_stage)
+                df_stage_files=fn.get_query_data(STAGE_FILES,st.session_state.usrname)
                 df_stage_files.columns = df_stage_files.columns.str.upper()
                 stg_inf=c2.empty()
                 stg_inf.info("Select checkbox to download")
@@ -285,8 +287,8 @@ try:
                         try:
                             df = pd.DataFrame(sel_rows)
                             stage_file=sel_db+"."+sel_schema+"."+df["NAME"][0]
-                            GET_STAGE_FILE=sql.GET_STAGE_FILE
-                            dl_stage_files=fn.get_query_2(GET_STAGE_FILE,stage_file)
+                            GET_STAGE_FILE=sql.GET_STAGE_FILE.format(arg2=stage_file)
+                            dl_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
 
                             ip=dl_stage_files["file"].iloc[0]
 
@@ -306,8 +308,8 @@ try:
                 c1,c2,c3=st.columns([2,3,2])
                 aud_script_sel = c2.selectbox('Select Script Name',script_name['SCRIPT_NAME'].unique(),key='s4')
                 aud_script_sel='\''+ aud_script_sel +'\''
-                AUDIT_LOGS=sql.AUDIT_LOGS
-                df_audit_logs=fn.get_query_2(AUDIT_LOGS,aud_script_sel)
+                AUDIT_LOGS=sql.AUDIT_LOGS.format(arg2=aud_script_sel)
+                df_audit_logs=fn.get_query_data(AUDIT_LOGS,st.session_state.usrname)
                 log_inf=c2.empty()
                 log_inf.info("Select checkbox to download")
                 gb = GridOptionsBuilder.from_dataframe(df_audit_logs)

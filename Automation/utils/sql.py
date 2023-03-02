@@ -92,6 +92,9 @@ PROFILE_SINGLE="""CALL  SNDBX_DEMO_DB.DEMO_WORK_INTERIM.profiling_data_with_pand
 
 COLUMNS="""SELECT COLUMN_NAME FROM {arg2}.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='{arg3}' AND TABLE_NAME='{arg4}'"""
 
+DAG="""SELECT PARENT,substr(F.VALUE::VARCHAR,(regexp_instr(F.VALUE::VARCHAR,'\\\.',1,2)+1)) CHILD 
+FROM (select NAME PARENT,PREDECESSORS CHILD from table(SNDBX_DEMO_DB.information_schema.task_dependents(task_name => '{arg2}', recursive => TRUE)) )MAIN,TABLE(FLATTEN(MAIN.CHILD))F"""
+
 # INSERT_JOB_SCRIPT="""MERGE INTO JOB_SCRIPTS AS TGT
 # USING 
 # (SELECT 1 AS JOB_ID, '"""+script_name[0]+"""' AS SCRIPT_NAME,5 AS RUN_ID,'@my_int_stage/"""+uploaded_file.name+""".gz' AS SQL_COMMAND,'FALSE' AS CONTINUE_ON_ERROR,'N' AS IGNORE_SCRIPT") AS SRC 

@@ -151,27 +151,27 @@ try:
                 return datetime_string
 
             ROLE=sql.ROLE
-            df_role=fn.get_model_run_date(ROLE)
+            df_role=fn.get_query_data(ROLE,st.session_state.usrname)
             if 'role' not in st.session_state:
                 role=st.sidebar.selectbox("Select Role",df_role["role"],key='role')
             else:    
                 role=st.sidebar.selectbox("Select Role",df_role["role"],index=list(df_role["role"]).index(st.session_state.role),key='role')
             
             WAREHOUSE=sql.WAREHOUSE
-            df_warehouse=fn.get_model_run_date(WAREHOUSE)
+            df_warehouse=fn.get_query_data(WAREHOUSE,st.session_state.usrname)
             wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["name"],key='s2')
             
-            USE_ROLE=sql.USE_ROLE
-            df=fn.get_query_2(USE_ROLE,role)
+            USE_ROLE=sql.USE_ROLE.format(arg2=role)
+            df=fn.get_query_data(USE_ROLE,st.session_state.usrname)
             
-            USE_WAREHOUSE=sql.USE_WAREHOUSE
-            df=fn.get_query_2(USE_WAREHOUSE,wh)
+            USE_WAREHOUSE=sql.USE_WAREHOUSE.format(arg2=wh)
+            df=fn.get_query_data(USE_WAREHOUSE,st.session_state.usrname)
             
             USE_DATABASE=sql.USE_DATABASE
-            df=fn.get_model_run_date(USE_DATABASE)
+            df=fn.get_query_data(USE_DATABASE,st.session_state.usrname)
 
             USE_SCHEMA_NAME=sql.USE_SCHEMA_NAME
-            df=fn.get_model_run_date(USE_SCHEMA_NAME)
+            df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
 
 
             
@@ -180,7 +180,7 @@ try:
             def load_data_task_list():
                 # load_dt = current_dt()
                 TASK=sql.TASK
-                df_task=fn.get_model_run_date(TASK)
+                df_task=fn.get_query_data(TASK,st.session_state.usrname)
                 df_task.columns = df_task.columns.str.upper()
         
                 # df_task['CREATED_ON'] = df_task['CREATED_ON'].dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -200,11 +200,11 @@ try:
 
             def load_data_task_hist():
                 current_dt()
-                TASK_HISTORY=sql.TASK_HISTORY
-                df_hist=fn.get_query_2(TASK_HISTORY,current_tz)
+                TASK_HISTORY=sql.TASK_HISTORY.format(arg2=current_tz)
+                df_hist=fn.get_query_data(TASK_HISTORY,st.session_state.usrname)
 
                 LONG_TASK=sql.LONG_TASK
-                df_long_task=fn.get_model_run_date(LONG_TASK)
+                df_long_task=fn.get_query_data(LONG_TASK,st.session_state.usrname)
                 #df_hist['SCHEDULED_TIME'] = df_hist['SCHEDULED_TIME'].dt.strftime('%m-%d-%y %H:%M:%S')
 
                 # df_hist.to_csv(task_hist_file, index=False)
@@ -221,7 +221,7 @@ try:
                 task_list, load_dt_list = load_data_task_list()
                 task_hist,df_long_task, load_dt_hist = load_data_task_hist()
                 PARENT_TASK=sql.PARENT_TASK
-                df_task_parent=fn.get_model_run_date(PARENT_TASK)
+                df_task_parent=fn.get_query_data(PARENT_TASK,st.session_state.usrname)
                 df_task_parent.columns = df_task_parent.columns.str.upper()
         
 
@@ -424,8 +424,8 @@ try:
                     if st.button("Execute Task"):
                         st.write("we are here")
                         print("EXECUTE TASK " + task_to_be_executed[0])
-                        EXECUTE_TASK=sql.EXECUTE_TASK
-                        df_exec=fn.get_query_2(EXECUTE_TASK,task_to_be_executed[0])
+                        EXECUTE_TASK=sql.EXECUTE_TASK.format(arg2=task_to_be_executed[0])
+                        df_exec=fn.get_query_data(EXECUTE_TASK,st.session_state.usrname)
                         # conn.execute_string("EXECUTE TASK " + task_to_be_executed[0])
                         st.write('Task Executed Successfully. Please check your Snowflake instance for more details.')
 
@@ -440,7 +440,7 @@ try:
                 task_to_be_execute = run_task_list(df_task_parent)#task_hist
             with tab5:
                 # TASK=sql.TASK
-                # df_task=fn.get_model_run_date(TASK)
+                # df_task=fn.get_query_data(TASK)
                 # df_task.columns = df_task.columns.str.upper()
                 # st.write(df_task)
                 # lst=list(df_task["NAME"])
@@ -459,8 +459,10 @@ try:
                 def rolechart():
                     
                     # sqlstr='\select * \from table(information_schema.task_dependents(task_name => \'SNDBX_DEMO_DB.DEMO_WORK_INTERIM.PARENT_TASK\', recursive => false))\'
-                    fn.sql_to_dataframe("Use warehouse Compute_wh")
-                    rdf=fn.sql_to_dataframe("SELECT PARENT,substr(F.VALUE::VARCHAR,(regexp_instr(F.VALUE::VARCHAR,'\\\.',1,2)+1)) CHILD FROM (select NAME PARENT,PREDECESSORS CHILD from table(SNDBX_DEMO_DB.information_schema.task_dependents(task_name => '"+task_sel.iloc[0]+"', recursive => TRUE)) )MAIN,TABLE(FLATTEN(MAIN.CHILD))F")
+                    # fn.sql_to_dataframe("Use warehouse Compute_wh",st.session_state.usrname)
+                    DAG=sql.DAG.format(arg2=task_sel.iloc[0])
+                    rdf=fn.get_query_data(DAG,st.session_state.usrname)
+                    # rdf=fn.sql_to_dataframe("SELECT PARENT,substr(F.VALUE::VARCHAR,(regexp_instr(F.VALUE::VARCHAR,'\\\.',1,2)+1)) CHILD FROM (select NAME PARENT,PREDECESSORS CHILD from table(SNDBX_DEMO_DB.information_schema.task_dependents(task_name => '"+task_sel.iloc[0]+"', recursive => TRUE)) )MAIN,TABLE(FLATTEN(MAIN.CHILD))F")
                     dot=graphviz.Digraph()
                     dot.attr("node", shape="box",fillcolor="aliceblue",style="filled")
                     dot.attr("edge", color="midnightblue",fillcolor="midnightblue")
