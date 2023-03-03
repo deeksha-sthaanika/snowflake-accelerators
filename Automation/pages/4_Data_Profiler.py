@@ -47,8 +47,9 @@ div.stButton > button:hover,focus,active {
     }
 </style>""", unsafe_allow_html=True)
 style="""
-.css-81oif8{
-font-weight:bold
+.css-184tjsw p{
+font-weight:bold;
+font-size:15px;
 }
 /*sidebar*/
 .css-163ttbj
@@ -172,32 +173,45 @@ try:
 
             table_sel=c3.selectbox("Select Table",df_table[(df_table["database_name"]==db) & (df_table["schema_name"]==sch)].name,key='s5')
 
+            sample_sel=c4.number_input("Enter Sample percentage",min_value=10.0,max_value=100.0)
+
             table_name=db+"."+sch+"."+table_sel
 
             COLUMNS=sql.COLUMNS.format(arg2=db,arg3=sch,arg4=table_sel)
             df_cols=fn.get_query_data(COLUMNS,st.session_state.usrname)
 
-
-            st.sidebar.markdown("<p style='margin-bottom: 15px;'><b>Select Columns to profile:</b></p>", unsafe_allow_html=True) 
-            check_box=st.sidebar.empty()
-            multi_select=st.sidebar.empty()
+            cl1,cl2=st.columns(2)
+            cl1.markdown("<p style='margin-bottom: 15px;'><b>Select Columns to profile:</b></p>", unsafe_allow_html=True) 
+            check_box=cl1.empty()
+            multi_select=cl1.empty()
             select_all = check_box.checkbox("Select all",value=True)
 
+            
             if select_all:
                 cols_sel = multi_select.multiselect('Select Columns to profile:', ['All selected'], ['All selected'], disabled=True, label_visibility='collapsed',key='m1')
                 cols_sel = list(df_cols["COLUMN_NAME"])
             else:
-                cols_sel = st.sidebar.multiselect('Select Columns to profile:',df_cols,df_cols["COLUMN_NAME"].head(2), label_visibility='collapsed',key='m2')
+                cols_sel = cl1.multiselect('Select Columns to profile:',df_cols,df_cols["COLUMN_NAME"].head(2), label_visibility='collapsed',key='m2')
                 
             cols_sel_str='\''+ ','.join(map(str, cols_sel)) +'\''
             # st.write('"'+ '","'.join(map(str, cols_sel)) +'"')
 
             # st.write(cols_sel)
+            cl2.markdown("<p style='margin-bottom: 15px;'><b>Select Columns for interaction:</b></p>", unsafe_allow_html=True) 
+            check_box2=cl2.empty()
+            multi_select2=cl2.empty()
+            select_all2 = check_box2.checkbox("Select all",value=True,key='chck1')
 
-            sample_sel=c4.number_input("Enter Sample percentage",min_value=10.0,max_value=100.0)
-            cols_sel_interaction=st.multiselect("select columns for interaction",cols_sel,cols_sel[0])
+            
+            if select_all2:
+                cols_sel_interaction = multi_select2.multiselect('Select Columns for interaction:', ['All selected'], ['All selected'], disabled=True, label_visibility='collapsed',key='m3')
+                cols_sel_interaction=cols_sel
+            else:
+                cols_sel_interaction = cl2.multiselect('Select Columns to profile:',cols_sel,cols_sel[0], label_visibility='collapsed',key='m4')
+            
+            # cols_sel_interaction=cl2.multiselect("select columns for interaction",cols_sel,cols_sel[0])
             # cols_sel_interaction='\''+ ','.join(map(str, cols_sel_interaction)) +'\''
-
+            st.write("")
             c11,c22,c33,c44=st.columns(4)
             sens=c11.checkbox("Show Sensitive")
             mini=c22.checkbox("Show Minimal")
@@ -212,61 +226,8 @@ try:
                 minimal=True
             else:
                 minimal=False
-            # if comp:
-            #     table_sel_comp=c44.selectbox("Select Table to compare",df_table[(df_table["database_name"]==db) & (df_table["schema_name"]==sch)].name,key='s6')
-            #     table_name_comp=db+"."+sch+"."+table_sel_comp
-            # else:
-            #     c44.empty()
-
-
-            # def profiling_data_with_pandas_py():
-            #     SAMPLE=sql.SAMPLE
-            #     df_sample =fn.get_query_3(SAMPLE,table_name,sample_sel)
-
-            #     df_sample=df_sample[cols_sel]
-            #     # st.write(df_sample)
-            #     #res_df = snowpark_session.table(profile_table)	 
-            #     #results_df_pd = res_df.to_pandas()
-            #     if cols_sel_interaction:
-            #         # profile = ProfileReport()
-            #         # profile.config.interactions.targets = cols_sel
-
-            #         # # Assigning a DataFrame and exporting to a file, triggering computation
-            #         # profile.df_sample = df_sample
-            #         # if samp:
-            #         #     report = df_sample.profile_report(sensitive=sensitive,minimal=minimal)
-            #         # else:
-            #         #     report = df_sample.profile_report(samples=None,sensitive=sensitive,minimal=minimal)
-            #         # if samp:
-            #         if comp:
-            #             table_sel_comp=c44.selectbox("Select Table to compare",df_table[(df_table["database_name"]==db) & (df_table["schema_name"]==sch)].name,key='s6')
-            #             table_name_comp=db+"."+sch+"."+table_sel_comp
-
-            #             SAMPLE=sql.SAMPLE
-            #             df_sample_comp =fn.get_query_3(SAMPLE,table_name_comp,sample_sel)
-            #             df_sample_comp=df_sample_comp[cols_sel]
-
-            #             profile1 = pp.ProfileReport(df_sample,sensitive=sensitive,minimal=minimal)
-            #             profile1.config.interactions.targets = cols_sel_interaction
-            #             profile2=pp.ProfileReport(df_sample_comp,sensitive=sensitive,minimal=minimal)
-            #             profile2.config.interactions.targets = cols_sel_interaction
-            #             comparison_report = profile1.compare(profile2)
-            #         else:
-            #             c44.empty()
-            #             comparison_report = pp.ProfileReport(df_sample,sensitive=sensitive,minimal=minimal)
-            #             comparison_report.config.interactions.targets = cols_sel_interaction
-            #         # else:
-            #             # profile = pp.ProfileReport(df_sample,sensitive=sensitive,minimal=minimal)
-                    
-
-            #     # st.write(profile)
-            #     st_profile_report(comparison_report)
-                # profile.to_file("output.html")
 
             def profiling_data_with_pandas(): 
-                # if comp:   
-                #     PROFILE=sql.PROFILE_COMP.format(arg2=table_name_comp,arg3=sample_sel,arg4=cols_sel_str,arg5=cols_sel_interaction,arg6=sensitive,arg7=minimal,arg8=table_name_comp)
-                # else:
                 PROFILE=sql.PROFILE_SINGLE.format(arg2=table_name,arg3=sample_sel,arg4=cols_sel_str,arg5=cols_sel_interaction,arg6=sensitive,arg7=minimal)
 
                 df_profile =fn.runquery(PROFILE,st.session_state.usrname)
@@ -285,7 +246,11 @@ try:
             st.warning("Please login to access this page") 
     else:
         st.warning("Please login to access this page")
-except AttributeError:
-    st.warning("Please login to access this page")
+except Exception as e:
+    if str(e).__contains__('success_param'):
+        st.error("Please login to access this page")
+    else:
+        st.error(e)
+
 
 

@@ -46,8 +46,9 @@ div.stButton > button:hover,focus,active {
     }
 </style>""", unsafe_allow_html=True)
 style="""
-.css-81oif8{
-font-weight:bold
+.css-184tjsw p{
+font-weight:bold;
+font-size:15px;
 }
 /*sidebar*/
 .css-163ttbj
@@ -246,44 +247,45 @@ try:
                     # st.write("Executed "+script_selected+" with run id "+str(i))
                     st.info("Executed "+script_selected+" with selected Sequence ids "+" in parallel. Please check the audit table for logs")
             with tab2:
-                
-                c1,c2,c3=st.columns([2,2,2])
+                try:
+                    c1,c2,c3=st.columns([2,2,2])
 
-                STAGE_NAME=sql.STAGE_NAME
-                df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
-                # st.write(df_stage_name)
-                df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
+                    STAGE_NAME=sql.STAGE_NAME
+                    df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
+                    # st.write(df_stage_name)
+                    df_stage_name=df_stage_name[df_stage_name["type"]=='INTERNAL']
+                    # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
-                sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
+                    sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
 
-                df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
-                sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
-                   
-                df_schema=df_database[df_database["schema_name"]==sel_schema]
-                selc_stage=c3.selectbox("Select Stage",df_schema["name"],key='s5')
-                db_schema_stage=sel_db+"."+sel_schema+"."+selc_stage
+                    df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
+                    sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
+                    
+                    df_schema=df_database[df_database["schema_name"]==sel_schema]
+                    selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
+                    db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
 
-                STAGE_FILES=sql.STAGE_FILES.format(arg2=db_schema_stage)
-                df_stage_files=fn.get_query_data(STAGE_FILES,st.session_state.usrname)
-                df_stage_files.columns = df_stage_files.columns.str.upper()
-                stg_inf=c2.empty()
-                stg_inf.info("Select checkbox to download")
+                    STAGE_FILES=sql.STAGE_FILES.format(arg2=db_schema_stage)
+                    df_stage_files=fn.get_query_data(STAGE_FILES,st.session_state.usrname)
+                    df_stage_files.columns = df_stage_files.columns.str.upper()
+                    stg_inf=c2.empty()
+                    stg_inf.info("Select checkbox to download")
 
-                gb = GridOptionsBuilder.from_dataframe(df_stage_files)
-                gb.configure_pagination(enabled=True)
-                gb.configure_selection(selection_mode="single", use_checkbox=True,pre_selected_rows=[0])
-                gridoptions = gb.build()
-                st.write("")
-                response=AgGrid(df_stage_files,gridOptions=gridoptions,
-                                update_mode=GridUpdateMode.SELECTION_CHANGED,
-                                fit_columns_on_grid_load=True,
-                                theme='alpine')
+                    gb = GridOptionsBuilder.from_dataframe(df_stage_files)
+                    gb.configure_pagination(enabled=True)
+                    gb.configure_selection(selection_mode="single", use_checkbox=True)
+                    gridoptions = gb.build()
+                    st.write("")
+                    response=AgGrid(df_stage_files,gridOptions=gridoptions,
+                                    update_mode=GridUpdateMode.SELECTION_CHANGED,
+                                    fit_columns_on_grid_load=True,
+                                    theme='alpine')
 
-                sel_rows = response['selected_rows']
-                if sel_rows:
-                    stg_inf.write("")
-                    download=st.button(label="Download Script")
-                    if download:
+                    sel_rows = response['selected_rows']
+                    if sel_rows:
+                        stg_inf.write("")
+                        # download=st.button(label="Download Script")
+                        # if download:
                         try:
                             df = pd.DataFrame(sel_rows)
                             stage_file=sel_db+"."+sel_schema+"."+df["NAME"][0]
@@ -299,9 +301,19 @@ try:
                                 op.close()
                             
                             os.remove(dl_stage_files["file"].iloc[0])
-                            st.success("Downloaded successfully in "+os.getcwd())  
+                            # csv=pd.read_csv(dl_stage_files["file"].iloc[0].split('.gz')[0])
+                            # st.write(csv)
+                            with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
+                                st.download_button(
+                                        label="Download File",
+                                        data=file,
+                                        file_name=dl_stage_files["file"].iloc[0].split('.gz')[0]
+                                    )  
+                            # st.success("Downloaded successfully in "+os.getcwd())  
                         except Exception as e:
-                            st.error(e)   
+                            st.error(e)  
+                except Exception as e:
+                    st.error(e) 
 
 
             with tab3:
@@ -337,5 +349,8 @@ try:
             st.warning("Please login to access this page") 
     else:
         st.warning("Please login to access this page")
-except AttributeError:
-    st.warning("Please login to access this page")
+except Exception as e:
+    if str(e).__contains__('success_param'):
+        st.error("Please login to access this page")
+    else:
+        st.error(e)

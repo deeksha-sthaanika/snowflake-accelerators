@@ -31,6 +31,10 @@ div.stButton > button:hover,focus,active {
 </style>""", unsafe_allow_html=True)
 st.markdown("""
 <style>
+.css-184tjsw p{
+font-weight:bold;
+font-size:15px;
+}
 /*sidebar*/
 .css-163ttbj
 {

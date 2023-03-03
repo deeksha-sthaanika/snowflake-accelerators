@@ -46,8 +46,9 @@ div.stButton > button:hover,focus,active {
     }
 </style>""", unsafe_allow_html=True)
 style="""
-.css-81oif8{
-font-weight:bold
+.css-184tjsw p{
+font-weight:bold;
+font-size:15px;
 }
 /*sidebar*/
 .css-163ttbj
@@ -500,5 +501,9 @@ try:
 
     else:
         st.warning("Please login to access this page")
-except AttributeError:
-    st.warning("Please login to access this page")
+except Exception as e:
+    if str(e).__contains__('success_param'):
+        st.error("Please login to access this page")
+    else:
+        st.error(e)
+
