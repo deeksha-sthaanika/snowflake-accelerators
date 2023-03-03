@@ -85,29 +85,6 @@ def get_query_data(query,usrname):
     df = sql_to_dataframe(query,usrname)
     return df
 
-# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
-# def get_model_run_date(query,usrname):
-#     df = sql_to_dataframe(query,usrname)
-#     return df
-
-# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-# def get_query_2(query,arg2,usrname):
-#     df = sql_to_dataframe(
-#         query.format(arg2=arg2),st.session_state.usrname)
-#     return df
-
-# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-# def get_query_3(query,arg2,arg3,usrname):
-#     df = sql_to_dataframe(
-#         query.format(arg2=arg2,arg3=arg3),st.session_state.usrname)
-#     return df
-
-# @st.cache_data(ttl=60*60,show_spinner=False)#ttl=1,
-# def get_query_4(query,arg2,arg3,arg4,usrname):
-#     df = sql_to_dataframe(
-#         query.format(arg2=arg2,arg3=arg3,arg4=arg4),st.session_state.usrname)
-#     return df
-
 @st.cache_resource(show_spinner=False)
 def init_connection():
     return snowflake.connector.connect(
