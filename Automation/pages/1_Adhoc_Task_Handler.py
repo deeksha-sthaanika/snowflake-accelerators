@@ -292,23 +292,34 @@ try:
                             GET_STAGE_FILE=sql.GET_STAGE_FILE.format(arg2=stage_file)
                             dl_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
 
-                            ip=dl_stage_files["file"].iloc[0]
-
-                            op = open(dl_stage_files["file"].iloc[0].split('.gz')[0],"w") 
-
-                            with gzip.open(ip,"rb") as ip_byte:
-                                op.write(ip_byte.read().decode("utf-8"))
-                                op.close()
-                            
-                            os.remove(dl_stage_files["file"].iloc[0])
-                            # csv=pd.read_csv(dl_stage_files["file"].iloc[0].split('.gz')[0])
-                            # st.write(csv)
-                            with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
-                                st.download_button(
-                                        label="Download File",
-                                        data=file,
-                                        file_name=dl_stage_files["file"].iloc[0].split('.gz')[0]
-                                    )  
+                            ip=str(dl_stage_files["file"].iloc[0])
+                            if ip.endswith(".gz"):
+                                op = open(dl_stage_files["file"].iloc[0].split('.gz')[0],"w")
+                                try:
+                                    with gzip.open(ip,"rb") as ip_byte:
+                                        op.write(ip_byte.read().decode("utf-8"))
+                                        op.close()
+                                        os.remove(dl_stage_files["file"].iloc[0])
+                                except Exception as e:
+                                    if str(e).__contains__('codec'):
+                                        st.error('Cannot unzip the file. Please check the root folder')
+                                        os.remove(dl_stage_files["file"].iloc[0].split('.gz')[0])
+                    
+                                with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
+                                    st.download_button(
+                                            label="Download File",
+                                            data=file,
+                                            file_name=dl_stage_files["file"].iloc[0].split('.gz')[0]
+                                        ) 
+                                file.close()
+                            else:
+                                with open(dl_stage_files["file"].iloc[0], "rb") as file:
+                                    st.download_button(
+                                            label="Download File",
+                                            data=file,
+                                            file_name=dl_stage_files["file"].iloc[0]
+                                        ) 
+                                file.close()
                             # st.success("Downloaded successfully in "+os.getcwd())  
                         except Exception as e:
                             st.error(e)  
@@ -352,5 +363,5 @@ try:
 except Exception as e:
     if str(e).__contains__('success_param'):
         st.error("Please login to access this page")
-    else:
-        st.error(e)
+    # else:
+    #     st.error(e)
