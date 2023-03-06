@@ -1,0 +1,12 @@
+altair
+pandas
+streamlit==1.17.0
+matplotlib
+numpy
+datetime
+python-math
+sqlparse
+millify
+typing
+snowflake-connector-python
+Plost
