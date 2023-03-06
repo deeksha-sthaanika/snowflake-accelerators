@@ -135,6 +135,10 @@ try:
         logout_btn=st.sidebar.button("Logout")
         if logout_btn:
             st.write("Successfully Logged out "+st.session_state.usrname)
+            file_list=os.listdir()
+            for i in file_list:
+                if str(i).endswith('.gz'):
+                    os.remove(i)
             # st.session_state.clear()
             st.session_state.success_param=False
             st.session_state.usrname=''
@@ -292,26 +296,30 @@ try:
                             GET_STAGE_FILE=sql.GET_STAGE_FILE.format(arg2=stage_file)
                             dl_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
 
-                            ip=str(dl_stage_files["file"].iloc[0])
-                            if ip.endswith(".gz"):
+                            ip=dl_stage_files["file"].iloc[0]
+                            if str(ip).endswith(".gz"):
                                 op = open(dl_stage_files["file"].iloc[0].split('.gz')[0],"w")
                                 try:
                                     with gzip.open(ip,"rb") as ip_byte:
                                         op.write(ip_byte.read().decode("utf-8"))
                                         op.close()
-                                        os.remove(dl_stage_files["file"].iloc[0])
+                                    # os.remove(dl_stage_files["file"].iloc[0])
+
+                                    with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
+                                        st.download_button(
+                                                label="Download File",
+                                                data=file,
+                                                file_name=dl_stage_files["file"].iloc[0].split('.gz')[0]
+                                            ) 
+                                    file.close()
                                 except Exception as e:
                                     if str(e).__contains__('codec'):
                                         st.error('Cannot unzip the file. Please check the root folder')
+                                        op.close()
                                         os.remove(dl_stage_files["file"].iloc[0].split('.gz')[0])
-                    
-                                with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
-                                    st.download_button(
-                                            label="Download File",
-                                            data=file,
-                                            file_name=dl_stage_files["file"].iloc[0].split('.gz')[0]
-                                        ) 
-                                file.close()
+                                    else:
+                                        st.error(e)
+
                             else:
                                 with open(dl_stage_files["file"].iloc[0], "rb") as file:
                                     st.download_button(
@@ -363,5 +371,5 @@ try:
 except Exception as e:
     if str(e).__contains__('success_param'):
         st.error("Please login to access this page")
-    # else:
-    #     st.error(e)
+    else:
+        st.error(e)
