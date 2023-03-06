@@ -252,7 +252,7 @@ try:
                         mode="number",
                         value=total_task_count,
                         title="Total Task",
-
+                        number={'font_color': 'black'}
                     ),
                     row=1, col=1
 
@@ -273,6 +273,7 @@ try:
                         mode="number",
                         value=total_task_scheduled,
                         title="Task Scheduled",
+                        number={'font_color': 'black'}
                     ),
                     row=2, col=1
                 )
