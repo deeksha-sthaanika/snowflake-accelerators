@@ -19,7 +19,7 @@ from typing import Tuple
 
 st.markdown("<h1 style='text-align: center; color: black;padding: 1% 1% 1% 1%;background-color: #a2d5f2;'>Resource Optimization</h1>", unsafe_allow_html=True)
 style="""
-.css-81oif8{
+.css-184tjsw p{
 font-weight:bold
 }
 .css-163ttbj
@@ -296,6 +296,7 @@ def main():
                         df_full_table_scan = fn.sql_to_dataframe(sql.FULL_TABLE_SCANS.format(
                             date_from=date_from,
                             date_to=date_to))
+                        st.markdown("<h4 style='text-align: center; color: black;'>Full Table Scans</h4>", unsafe_allow_html=True)
                         col1,col2,col3=st.columns([3,2,2])
                         with col2:
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb1')
@@ -315,6 +316,7 @@ def main():
                         df_heavy_scanners = fn.sql_to_dataframe(sql.HEAVY_SCANNERS.format(
                             date_from=date_from,
                             date_to=date_to))
+                        st.markdown("<h4 style='text-align: center; color: black;'>Heavy Scanners</h4>", unsafe_allow_html=True)
                         col1,col2,col3=st.columns([3,2,2])
                         with col2:
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb2')
@@ -339,12 +341,13 @@ def main():
                         df_wh_cache_usg = fn.sql_to_dataframe(sql.WAREHOUSE_CACHE_USAGE.format(
                             date_from=date_from,
                             date_to=date_to))
+                        st.markdown("<h4 style='text-align: center; color: black;'>Warehouse Cache Usage</h4>", unsafe_allow_html=True)
                         col1,col2,col3=st.columns([3,2,2])
                         with col2:
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb2')
                         if format1 == 'Graph form':
-                            fig = px.bar(df_wh_cache_usg, x='WAREHOUSE_NAME', y='MB_SCANNED',hover_data=['QUERY_COUNT','MB_SCANNED_FROM_CACHE','PERCENT_SCANNED_FROM_CACHE'])
-                            fig.update_layout(xaxis_title='WAREHOUSE NAME',yaxis_title='MB SCANNED',width=1400,height=500)
+                            fig = px.bar(df_wh_cache_usg, x='WAREHOUSE_NAME', y='GB_SCANNED',hover_data=['QUERY_COUNT','GB_SCANNED_FROM_CACHE','PERCENT_SCANNED_FROM_CACHE'])
+                            fig.update_layout(xaxis_title='WAREHOUSE NAME',yaxis_title='GB SCANNED',width=1400,height=500)
                             st.write(fig)
                         else:
                             dl1,dl2=st.columns([6,1])

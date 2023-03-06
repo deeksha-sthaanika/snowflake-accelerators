@@ -1,5 +1,8 @@
 #from turtle import onclick
 import streamlit as st
+st.set_page_config(
+    page_title="Snowatch App - Table Catalog", page_icon="🔹", layout="wide"
+)
 from typing import Any, Dict
 from snowflake.connector import connect
 from snowflake.connector.connection import SnowflakeConnection
@@ -9,11 +12,10 @@ from utils import sql as sql
 from st_aggrid import AgGrid,GridUpdateMode,DataReturnMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 
-st.set_page_config(layout="wide")
 st.markdown("<h1 style='text-align: center; color: black;padding: 1% 1% 1% 1%;background-color: #a2d5f2;'>Table Catalog</h1>", unsafe_allow_html=True)
 
 style="""
-.css-81oif8{
+.css-184tjsw p{
 font-weight:bold
 }
 .css-163ttbj
