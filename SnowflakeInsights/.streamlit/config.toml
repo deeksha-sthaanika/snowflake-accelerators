@@ -1,5 +1,8 @@
 [runner]
 fastReruns = true
 
+[global]
+showWarningOnDirectExecution = false
+
 [theme]
 primaryColor = "#28B1F5"
