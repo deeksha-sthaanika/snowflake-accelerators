@@ -208,7 +208,7 @@ def main():
                 df_storage_over_time=fn.sql_to_dataframe(sql.STORAGE_OVER_TIME.format(
                                         date_from=date_from,
                                         date_to=date_to))
-                fig = px.bar(df_storage_over_time, x="USAGE_DATE", y=["STORAGE","STAGE","FAILSAFE"],barmode = 'group')
+                fig = px.bar(df_storage_over_time, x="USAGE_DATE", y=["STORAGE","STAGE","FAILSAFE"],barmode = 'stack')
                 fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='STORAGE (MB)',width=1400,height=500)
                 st.write(fig)
                 # st.write(
