@@ -96,6 +96,26 @@ div[data-testid="metric-container"] > div[data-testid="stMetricValue"] > div {
 </style>
 """
 , unsafe_allow_html=True)
+style_table="""
+thead{
+background-color:#336699;
+font-size: 19px;
+font-weight:bold
+}
+tbody{
+font-size: 19px;
+font-weight:bold;
+background-color:AliceBlue
+}
+.css-81oif8{
+font-size: 19px;
+font-weight:bold
+}
+.css-a51556{
+    color:white
+}
+"""
+st.markdown(f"<style>{style_table}</style>",unsafe_allow_html=True)
 
 
 def main():
