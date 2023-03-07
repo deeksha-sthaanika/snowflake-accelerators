@@ -99,6 +99,28 @@ div[data-testid="metric-container"] > div[data-testid="stMetricValue"] > div {
 </style>
 """
 , unsafe_allow_html=True)
+style_table="""
+thead tr th:first-child {display:none;}
+tbody th {display:none;}
+thead{
+background-color:#336699;
+font-size: 19px;
+font-weight:bold
+}
+tbody{
+font-size: 19px;
+font-weight:bold;
+background-color:AliceBlue
+}
+.css-81oif8{
+font-size: 19px;
+font-weight:bold
+}
+.css-a51556{
+    color:white
+}
+"""
+st.markdown(f"<style>{style_table}</style>",unsafe_allow_html=True)
 
 def main():
     try:
@@ -361,7 +383,7 @@ def main():
                         format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='r2')
                     if format1 == 'Graph form':
                         fig = px.line(warehouse_usage_hr, x="START_TIME", y="CREDITS_USED_COMPUTE",markers=True,custom_data=["WAREHOUSE_NAME"]).update_traces(hovertemplate='WAREHOUSE = %{customdata[0]}<br>TIMESTAMP = %{x}<br>CREDITS USED = %{y}<br><extra></extra>')
-                        fig.update_layout(xaxis_title='TIMESTAMP',yaxis_title='CREDITS USED',width=1400,height=700)
+                        fig.update_layout(xaxis_title='TIMESTAMP',yaxis_title='CREDITS USED',width=1400,height=500)
                         st.write(fig)
                     else:
                         dl1,dl2=st.columns([6,1])
@@ -386,7 +408,7 @@ def main():
                         format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='r3')
                     if format1 == 'Graph form':
                         fig = px.line(avg_query_volume, x="QUERY_START_HOUR", y="NUM_QUERIES",markers=True,custom_data=["WAREHOUSE_NAME"]).update_traces(hovertemplate='WAREHOUSE = %{customdata[0]}<br>TIMESTAMP = %{x}<br>NO. OF QUERIES = %{y}<br><extra></extra>')
-                        fig.update_layout(xaxis_title='TIMESTAMP',yaxis_title='NUMBER OF QUERIES',width=1400,height=700)
+                        fig.update_layout(xaxis_title='TIMESTAMP',yaxis_title='NUMBER OF QUERIES',width=1400,height=500)
                         st.write(fig)
                     else:
                         dl1,dl2=st.columns([6,1])
@@ -411,10 +433,11 @@ def main():
                     if format1 == 'Graph form':
                         fig = px.bar(df_daily_credits_type, x="USAGE_DATE", y=["WAREHOUSE_CREDITS","PIPE_CREDITS","MVIEW_CREDITS",
                                                                             "CLUSTERING_CREDITS","READER_CREDITS"],barmode = 'stack')
-                        fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='CREDITS',width=1400,height=700)
+                        fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='CREDITS',width=1400,height=500)
                         st.write(fig)
                     else:
                         dl1,dl2=st.columns([6,1])
+                        df_daily_credits_type=df_daily_credits_type.astype(str)
                         csv=df_daily_credits_type.to_csv().encode('utf-8')
                         with dl2:st.download_button(label="Download Table",data=csv,file_name='Daily Credits By Type.csv',mime='text/csv')
                         st.table(df_daily_credits_type.head(20))

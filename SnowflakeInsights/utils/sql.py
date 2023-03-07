@@ -42,7 +42,7 @@ WAREHOUSE_USAGE_HOURLY = """
 // Credits used by [hour, warehouse] (past 7 days)
 select START_TIME ,
        WAREHOUSE_NAME ,
-       CREDITS_USED_COMPUTE
+       ROUND(CREDITS_USED_COMPUTE,3) as CREDITS_USED_COMPUTE
 from SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
 where START_TIME >= convert_timezone('UTC', 'UTC', ('{date_from}T00:00:00Z')::timestamp_ltz)
   and start_time < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timestamp_ltz)
