@@ -76,6 +76,28 @@ div.stButton > button:active {
     color:white;
     }
 </style>""", unsafe_allow_html=True)
+style_table="""
+thead tr th:first-child {display:none;}
+tbody th {display:none;}
+thead{
+background-color:#336699;
+font-size: 19px;
+font-weight:bold
+}
+tbody{
+font-size: 19px;
+font-weight:bold;
+background-color:AliceBlue
+}
+.css-81oif8{
+font-size: 19px;
+font-weight:bold
+}
+.css-a51556{
+    color:white
+}
+"""
+st.markdown(f"<style>{style_table}</style>",unsafe_allow_html=True)
 
 
 
@@ -224,6 +246,20 @@ def main():
                         df_billing = fn.sql_to_dataframe(sql.MOST_EXPENSIVE_QUERY.format(
                             date_from=date_from,
                             date_to=date_to))
+                        if df_billing.empty:
+                            st.write("No data found")
+                        else:
+                            df_expensive_queries = gui.dataframe_with_podium(
+                                                df_billing, "EXECUTION_TIME_SECONDS"
+                                                ).head(10)
+                            st.markdown("<h4 style='text-align: center; color: black;'>Run History Of Most Expensive Queries</h4>", unsafe_allow_html=True)
+                            fig = px.scatter(df_billing, x="START_TIME", y="EXECUTION_TIME_SECONDS",custom_data=["QUERY_ID","USER_NAME","ROLE_NAME","WAREHOUSE_SIZE"]).update_traces(hovertemplate='QueryID = %{customdata[0]}<br>Start Time = %{x}<br>Duration = %{y} seconds<br>Username = %{customdata[1]}<br> Role = %{customdata[2]}<br> Warehouse Size = %{customdata[3]}<extra></extra>')
+                            fig.update_layout(xaxis_title='START TIME',yaxis_title='DURATION (Seconds)',width=1400,height=500)
+                            st.write(fig)
+                            with st.expander("🔎 Zoom into Top 10 expensive queries in detail"):
+                                for query in df_expensive_queries.itertuples():
+                                    st.write(f"**{query.Index}**.{query.QUERY_ID} - {query.EXECUTION_TIME_SECONDS} seconds - {query.USER_NAME} - {query.ROLE_NAME} - {query.WAREHOUSE_SIZE}""")
+                                    st.code(query.QUERY_TEXT, "sql")
 
                     # elif sel_metrics == 'Average Cost Per Query':
                     #     df_billing = fn.sql_to_dataframe(sql.AVERAGE_COST_PER_QUERY.format(
@@ -258,34 +294,34 @@ def main():
                         df_billing = fn.sql_to_dataframe(sql.REPLICATION_COST_HISTORY.format(
                             date_from=date_from,
                             date_to=date_to))
+                    if sel_metrics not in ['Most Expensive Queries']:
+                        if df_billing.empty:
+                            st.write("No data found")
+                        else:
+                            st.write("")
+                            gb = GridOptionsBuilder.from_dataframe(df_billing)
+                            gb.configure_pagination(enabled=True)
+                            gb.configure_selection(selection_mode="multiple", use_checkbox=True,header_checkbox=True)
+                            gridoptions = gb.build()
 
-                    if df_billing.empty:
-                        st.write("No data found")
-                    else:
-                        st.write("")
-                        gb = GridOptionsBuilder.from_dataframe(df_billing)
-                        gb.configure_pagination(enabled=True)
-                        gb.configure_selection(selection_mode="multiple", use_checkbox=True,header_checkbox=True)
-                        gridoptions = gb.build()
+                            result=AgGrid(df_billing,gridOptions=gridoptions,
+                                            update_mode=GridUpdateMode.SELECTION_CHANGED,
+                                            height=300,
+                                            theme='alpine')
+                            sel_result = result['selected_rows']
+                            if sel_result:
+                                # log_inf.write("")
+                                df_selected_result = pd.DataFrame(sel_result)
+                                csv = df_selected_result.to_csv().encode('utf-8')
 
-                        result=AgGrid(df_billing,gridOptions=gridoptions,
-                                        update_mode=GridUpdateMode.SELECTION_CHANGED,
-                                        height=300,
-                                        theme='alpine')
-                        sel_result = result['selected_rows']
-                        if sel_result:
-                            # log_inf.write("")
-                            df_selected_result = pd.DataFrame(sel_result)
-                            csv = df_selected_result.to_csv().encode('utf-8')
-
-                            st.download_button(
-                                label="Download data as CSV",
-                                data=csv,
-                                file_name=sel_metrics+'.csv',
-                                mime='text/csv',
-                            ) 
+                                st.download_button(
+                                    label="Download data as CSV",
+                                    data=csv,
+                                    file_name=sel_metrics+'.csv',
+                                    mime='text/csv',
+                                ) 
                 with tab3:
-                    performance_opt=["Data Ingest With Snowpipe","Full Table Scans","Heavy Scanners",
+                    performance_opt=["Data Ingest With Snowpipe","Full Table Scans","Heavy Scanners","Queries By WarehouseSize",
                                      "Top 10 Spillers Remote","Warehouse Cache Usage"]
                     sel_perf=st.selectbox("Select Option",performance_opt,key='op3')
                     if sel_perf == 'Data Ingest With Snowpipe':
@@ -336,6 +372,17 @@ def main():
                         df_performance = fn.sql_to_dataframe(sql.TOP_10_SPILLERS_REMOTE.format(
                             date_from=date_from,
                             date_to=date_to))
+                    elif sel_perf == 'Queries By WarehouseSize':
+                        date_from, date_to = date_selection('d15')
+                        df_queries_percentage = fn.sql_to_dataframe(sql.QUERIES_BY_WAREHOUSE.format(
+                            date_from=date_from,
+                            date_to=date_to))
+                        df_queries_percentage["WAREHOUSE_SIZE"].fillna('NULL',inplace=True)
+                        st.markdown("<h4 style='text-align: center; color: black;'>Percentage of Queries Executed By Warehouse Size</h4>", unsafe_allow_html=True)
+                        fig = px.bar(df_queries_percentage, x='START_TIME',y='PERCENT',text='PERCENT',color='WAREHOUSE_SIZE')
+                        fig.update_layout(xaxis_title='DATE',yaxis_title='PERCENTAGE',width=1400,height=500)
+                        st.write(fig)
+                         
                     else:
                         date_from, date_to = date_selection('d14')
                         df_wh_cache_usg = fn.sql_to_dataframe(sql.WAREHOUSE_CACHE_USAGE.format(
@@ -354,7 +401,8 @@ def main():
                             csv=df_wh_cache_usg.to_csv().encode('utf-8')
                             with dl2:st.download_button(label="Download Table",data=csv,file_name='Warehouse Cache Usage.csv',mime='text/csv')
                             st.table(df_wh_cache_usg.head(20))
-                    if sel_perf not in ['Full Table Scans','Heavy Scanners','Warehouse Cache Usage']:
+                    
+                    if sel_perf not in ['Full Table Scans','Heavy Scanners','Warehouse Cache Usage','Queries By WarehouseSize']:
                         if df_performance.empty:
                             st.write("No data found")
                         else:

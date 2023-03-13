@@ -77,7 +77,7 @@ st.markdown("""
 div[data-testid="metric-container"] {
    background-color: rgba(219,226,233,0.8);
    border: 1px solid rgba(28, 131, 225, 0.1);
-   padding: 5% 5% 5% 5%;
+   padding: 10% 5% 5% 10%;
    border-radius: 25px;
    color: rgb(30, 103, 119);
    width: 180px;
@@ -129,7 +129,7 @@ try:
             df_total_tables= fn.sql_to_dataframe(sql.TOTAL_TABLES)
             df_failed_login= fn.sql_to_dataframe(sql.FAILED_LOGIN_ATTEMPTS)
 
-            col1,col2,col3,col4=st.columns([2,2,2,4])
+            col1,col2,col3,col4,col5=st.columns([4,2,2,2,4])
             col2.metric("#Databases",df_total_dbs.iloc[0][0])
             col3.metric("#Tables",df_total_tables.iloc[0][0])
             col4.metric("Failed Login Attempts (%)",round(df_failed_login.iloc[0][0],2))
