@@ -40,8 +40,16 @@ text-align: left;
 st.markdown(footer,unsafe_allow_html=True)
 st.markdown("""
 <style>
-div.stButton > button:hover,focus,active {
+div.stButton > button:hover {
     background-color: #28B1F5;
+    color:white;
+    }
+div.stButton > button:focus {
+    background-color:#E0FFFF;
+    color:white;
+    }
+div.stButton > button:active {
+    background-color: #E0FFFF;
     color:white;
     }
 </style>""", unsafe_allow_html=True)
