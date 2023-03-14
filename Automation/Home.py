@@ -118,22 +118,28 @@ try:
             u_err=st.empty()
             # u_err.error("Username field cannot be Empty!")
 
+        sso_chkbx=st.empty()
+        if 'sso' not in st.session_state:
+            st.session_state.sso=sso_chkbx.checkbox("Sign in using OKTA SSO")
+        else:
+            st.session_state.sso=sso_chkbx.checkbox("Sign in using OKTA SSO")
+
         pwd_plc=st.empty()
+        if not st.session_state.sso:
+            if 'password_ip' not in st.session_state:
+                st.session_state.password_ip = ""
+                pwd = pwd_plc.text_input("Password",type='password',key="text2")
+            else: 
+                pwd = pwd_plc.text_input("Password",st.session_state.password_ip,type='password',key="text2")
 
-        if 'password_ip' not in st.session_state:
-            st.session_state.password_ip = ""
-            pwd = pwd_plc.text_input("Password",type='password',key="text2")
-        else: 
-            pwd = pwd_plc.text_input("Password",st.session_state.password_ip,type='password',key="text2")
-
-        if len(pwd)<=0:
-            p_err=st.empty()
+            if len(pwd)<=0:
+                p_err=st.empty()
             # p_err.error("Password field cannot be Empty!")
         # if len(username)<=0 and len(pwd)<=0 and len(acc)<=0:
         #     st.error("Please enter all the fields")
         
 
-        st.session_state.password_ip=pwd
+            st.session_state.password_ip=pwd
         st.session_state.usrname=username
         st.session_state.account=acc
 
@@ -165,6 +171,7 @@ try:
         head.write("")
         wrng_plc.write("")
         # u_err.write("")
+        sso_chkbx.write("")
         pwd_plc.write("")
         # p_err.write("")
         acc_plc.write("")
@@ -182,12 +189,18 @@ try:
                 
     else:
         if Login:
-            if len(username)>0 and len(pwd)>0 and len(acc)>0 :    #and len(wh)>0 and len(role)>0    
-                try:    
+            # if len(username)>0 and len(pwd)>0 and len(acc)>0 :    #and len(wh)>0 and len(role)>0    
+                try: 
+                    if st.session_state.sso:
+                        input={'user':st.session_state.usrname,'account':st.session_state.account}
+                        browser=True
+                    else:
+                        input={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account}
+                        browser=False
                     snowflake_connector = fn.get_connector(      
                     secrets_key="sf_usage_app",  
-                    input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
-                    use_browser=False,)
+                    input_params=input,#,'warehouse':st.session_state.whname,'role':st.session_state.role
+                    use_browser=browser,)
                     un_plc.success("Logged In as {}. Please choose a page".format(st.session_state.usrname))
                     
                     st.session_state.success_param = True 
@@ -195,6 +208,7 @@ try:
                     wrng_plc.write("")
                     # un_plc.write("")
                     # u_err.write("")
+                    sso_chkbx.write("")
                     pwd_plc.write("")
                     # p_err.write("")
                     acc_plc.write("")
@@ -205,8 +219,8 @@ try:
                     # st.write(st.session_state)
                 except:        
                     st.error("Incorrect Username/Password")
-            else:
-                col2.error("Please enter all the fields")
+            # else:
+            #     col2.error("Please enter all the fields")
     if Reset:
         st.session_state.password_ip=""
         st.session_state.usrname=""
