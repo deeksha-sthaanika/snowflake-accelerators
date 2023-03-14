@@ -10,11 +10,16 @@ from utils import sql as sql
 import functions as fn
 import altair as alt
 import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
 from datetime import date,timedelta
 
 st.markdown("<h1 style='text-align: center; color: black;padding: 1% 1% 1% 1%;background-color: #a2d5f2;'>Compute Insights</h1>", unsafe_allow_html=True)
 style="""
 .css-184tjsw p{
+font-weight:bold
+}
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
 font-weight:bold
 }
 .css-163ttbj
@@ -244,15 +249,17 @@ def main():
                             df,
                             date_column="START_TIME",
                         )
-
+                        fig = px.bar(df_resampled, x='START_TIME', y='CREDITS_USED')
+                        fig.update_layout(xaxis_title='START TIME',yaxis_title='CREDITS USED',width=1500)
+                        st.write(fig)
                         # Bar chart
-                        bar_chart = charts.get_bar_chart(
-                            df=df_resampled,
-                            date_column="START_TIME",
-                            value_column="CREDITS_USED",
-                        )
+                        # bar_chart = charts.get_bar_chart(
+                        #     df=df_resampled,
+                        #     date_column="START_TIME",
+                        #     value_column="CREDITS_USED",
+                        # )
 
-                        st.altair_chart(bar_chart, use_container_width=True)
+                        # st.altair_chart(bar_chart, use_container_width=True)
 
                         # Group by
                         agg_config = {"CREDITS_USED": "sum"}
