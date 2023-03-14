@@ -40,8 +40,16 @@ text-align: left;
 st.markdown(footer,unsafe_allow_html=True)
 st.markdown("""
 <style>
-div.stButton > button:hover,focus,active {
+div.stButton > button:hover {
     background-color: #28B1F5;
+    color:white;
+    }
+div.stButton > button:focus {
+    background-color:#E0FFFF;
+    color:white;
+    }
+div.stButton > button:active {
+    background-color: #E0FFFF;
     color:white;
     }
 </style>""", unsafe_allow_html=True)
@@ -257,7 +265,7 @@ try:
                     STAGE_NAME=sql.STAGE_NAME
                     df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
                     # st.write(df_stage_name)
-                    df_stage_name=df_stage_name[df_stage_name["type"]=='INTERNAL']
+                    df_stage_name=df_stage_name[(df_stage_name["type"]=='INTERNAL')&(df_stage_name["owner"]!='APPADMIN')]
                     # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
                     sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
