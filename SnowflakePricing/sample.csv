@@ -1,3 +1,2 @@
-Warehouse Name,Warehouse Size,Maximum Clusters,Usage Per Day(hr),No.Of Days Per Week,Credits Per Month,Amount Per Month
-WH,XS,1.0,2.0,4.0,34.76,139.04
-WH,XS,,,,,
+Cloud Platform,Region,Warehouse Name,Warehouse Size,Maximum Clusters,Usage Per Day (hr),No.Of Days Per Week,Credits Per Month,Amount Per Month ($)
+AWS,Asia Pacific(Mumbai),WH,XS,0.0,0.0,0.0,0.0,0.0

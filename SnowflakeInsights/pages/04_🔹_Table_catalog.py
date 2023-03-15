@@ -18,6 +18,9 @@ style="""
 .css-184tjsw p{
 font-weight:bold
 }
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
+font-weight:bold
+}
 .css-163ttbj
 {
     background-color:#cae7f7

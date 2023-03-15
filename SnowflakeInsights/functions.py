@@ -47,7 +47,7 @@ def get_connector(
     return connector
 
 
-@st.cache_data(ttl=60*60,show_spinner=False)#ttl=60*60,
+@st.cache_data(ttl=10,show_spinner=False)#ttl=60*60,
 def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
@@ -59,7 +59,7 @@ def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
     # st.write(st.session_state)
     return data
 
-@st.cache_data(ttl=60*10,show_spinner=False)
+@st.cache_data(ttl=10,show_spinner=False)
 def get_queries_data(
     date_from: datetime.date,
     date_to: datetime.date,
