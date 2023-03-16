@@ -322,7 +322,7 @@ try:
                 
 
                 st.markdown(
-                    "<h2 style='text-align: center; color: black;'>Long Running Tasks",
+                    "<h2 style='text-align: center; color: black;'>Top 10 Long Running Tasks",
                     unsafe_allow_html=True)
                 st.table(df_long_task[["NAME", "DATABASE_NAME", "SCHEMA_NAME","DURATION_SECONDS"]].head(10))
 

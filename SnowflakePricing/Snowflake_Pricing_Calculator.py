@@ -200,3 +200,21 @@ if cal:
             grid_response=generate_agrid(df)
     except:
         st.warning("Please fill/update the required input columns")
+
+st.write("")
+st.markdown("<h4 style='text-align: center; color: Blue;'>Total Summary</h4>", unsafe_allow_html=True)
+col1,col2,col3=st.columns([9,6,5])
+total_cost=col2.button("Total Cost ($)")
+if total_cost:
+    if (len(grid_response["selected_rows"])==0) or (len(grid_response["selected_rows"])>1):
+        st.warning("Please select a single row for total calculation")
+    else:
+        try:
+            selected_rows=pd.DataFrame(grid_response["selected_rows"])
+            if selected_rows["Cloud Platform"].iloc[0] == sel_platform:
+                total=st.session_state.storage_cost.iloc[0]+st.session_state.data_trans_cost.iloc[0]+selected_rows["Amount Per Month ($)"].iloc[0]
+                col2.metric("",round(total,2))
+            else:
+                st.warning("Please select a row with same cloud Platform")
+        except:
+            st.warning("Calculate storage,data transfer and compute cost to populate total cost")

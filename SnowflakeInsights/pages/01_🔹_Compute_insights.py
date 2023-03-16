@@ -250,7 +250,7 @@ def main():
                             date_column="START_TIME",
                         )
                         fig = px.bar(df_resampled, x='START_TIME', y='CREDITS_USED')
-                        fig.update_layout(xaxis_title='START TIME',yaxis_title='CREDITS USED',width=1500)
+                        fig.update_layout(xaxis_title='START TIME',yaxis_title='CREDITS USED',width=1400)
                         st.write(fig)
                         # Bar chart
                         # bar_chart = charts.get_bar_chart(
@@ -278,7 +278,7 @@ def main():
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='r1')
                         if format1 == 'Graph form':
                             fig = px.bar(df_grouped_top_10, x='NAME', y='CREDITS_USED')
-                            fig.update_layout(xaxis_title='WAREHOUSE NAME',yaxis_title='CREDITS USED',width=1500)
+                            fig.update_layout(xaxis_title='WAREHOUSE NAME',yaxis_title='CREDITS USED',width=1400)
                             st.write(fig)
                         else:
                             dl1,dl2=st.columns([6,1])
@@ -471,7 +471,7 @@ def main():
                         format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='r4')
                     if format1 == 'Graph form':
                         fig = px.bar(users_data, x='APPROXIMATE_CREDITS_USED', y='USER_NAME',orientation='h')
-                        fig.update_layout(xaxis_title='CREDITS USED',yaxis_title='USER NAME',width=1500)
+                        fig.update_layout(xaxis_title='CREDITS USED',yaxis_title='USER NAME',width=1400)
                         st.write(fig)
                     else:
                         dl1,dl2=st.columns([6,1])
