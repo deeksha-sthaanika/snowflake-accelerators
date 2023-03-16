@@ -204,7 +204,7 @@ try:
                         st.error("Sequence Id Exists")
                     else:
                         job_sel=st.radio("Choose one",("File","SQL Command"),horizontal=True)
-
+                        st.info("Please note to use semicolon(;) as delimiter to segregate multiple queries")
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
@@ -322,7 +322,7 @@ try:
                         #     st.error("Run Id Exists")
                         # else:
                         job_sel=st.radio("Choose one ",("File","SQL Command"),horizontal=True)
-
+                        st.info("Please note to use semicolon(;) as delimiter to segregate multiple queries")
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
@@ -377,7 +377,7 @@ try:
 
                 else:
                     gd.configure_column("SCRIPT_NAME", headerCheckboxSelection = True)
-                    gd.configure_selection(selection_mode="multiple", use_checkbox=True,pre_selected_rows=[0,3])
+                    gd.configure_selection(selection_mode="multiple", use_checkbox=True,pre_selected_rows=[0])
                     gridoptions = gd.build()
                     st.write("")
 
@@ -393,11 +393,12 @@ try:
                     else:
                         delete=st.button("Delete selected rows")
                         if delete:
-                            update_filter="SCRIPT_NAME='"+df_sel_rows["SCRIPT_NAME"].iloc[0]+"' AND SEQ_ID="+str(df_sel_rows["SEQ_ID"].iloc[0]) 
-                            #or st.session_state.delete_btn:
-                            # st.session_state.delete_btn=True
-                            DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg2=update_filter)
-                            df_insert=fn.get_query_data(DELETE_JOB_SCRIPT,st.session_state.usrname) 
+                            for i in range(len(df_sel_rows)):
+                                update_filter="SCRIPT_NAME='"+df_sel_rows["SCRIPT_NAME"].iloc[i]+"' AND SEQ_ID="+str(df_sel_rows["SEQ_ID"].iloc[i]) 
+                                #or st.session_state.delete_btn:
+                                # st.session_state.delete_btn=True
+                                DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg2=update_filter)
+                                df_insert=fn.get_query_data(DELETE_JOB_SCRIPT,st.session_state.usrname) 
                             st.success("Deleted Successfully")
             with tab3:
                 # st.write("WIP") 
