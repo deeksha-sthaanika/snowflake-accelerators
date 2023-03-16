@@ -22,6 +22,9 @@ style="""
 .css-184tjsw p{
 font-weight:bold
 }
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
+font-weight:bold
+}
 .css-163ttbj
 {
     background-color:#cae7f7
@@ -122,7 +125,8 @@ def main():
                     role=st.sidebar.selectbox("Select Role",df_role["role"],index=list(df_role["role"]).index(st.session_state.role),key='role')
                 
                 df_warehouse = fn.sql_to_dataframe(sql.WAREHOUSE)
-                wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["name"],key='s2')
+                df_warehouse.rename(columns = {'name':'WAREHOUSE_NAME','size':'WAREHOUSE_SIZE'}, inplace = True)
+                wh=st.sidebar.selectbox("Select Warehouse",df_warehouse["WAREHOUSE_NAME"],key='s2')
 
                 df = fn.sql_to_dataframe(sql.USE_ROLE.format(role=role))
 
@@ -163,26 +167,26 @@ def main():
                         # WAREHOUSE=sql.WAREHOUSE
                         # df_warehouse=fn.get_model_run_date(WAREHOUSE)
                         # df_setup= fn.sql_to_dataframe(sql.WAREHOUSE_WO_AUTO_RESUME) 
-                        df_setup=df_warehouse[df_warehouse["auto_resume"]=='false'][["name","size"]] 
+                        df_setup=df_warehouse[df_warehouse["auto_resume"]=='false'][["WAREHOUSE_NAME","WAREHOUSE_SIZE"]] 
                         
                     elif sel_opt == "Warehouses Without Auto-Suspend":
                         # WAREHOUSE=sql.WAREHOUSE
                         # df_warehouse=fn.get_model_run_date(WAREHOUSE)
                         # df_setup = fn.sql_to_dataframe(sql.WAREHOUSE_WO_AUTO_SUSPEND)
                         df_warehouse["auto_suspend"].fillna(0,inplace=True)
-                        df_setup=df_warehouse[df_warehouse["auto_suspend"]==0][["name","size"]]
+                        df_setup=df_warehouse[df_warehouse["auto_suspend"]==0][["WAREHOUSE_NAME","WAREHOUSE_SIZE"]]
                         
                     elif sel_opt == "Warehouses With Long Suspension":
                         # WAREHOUSE=sql.WAREHOUSE
                         # df_warehouse=fn.get_model_run_date(WAREHOUSE)
                         #df_setup = fn.sql_to_dataframe(sql.WAREHOUSE_WI_LONG_SUSPENSION)
-                        df_setup=df_warehouse[df_warehouse["auto_suspend"]>= 3600][["name","size"]]
+                        df_setup=df_warehouse[df_warehouse["auto_suspend"]>= 3600][["WAREHOUSE_NAME","WAREHOUSE_SIZE"]]
                         
                     elif sel_opt == "Warehouses Without Resource Monitors":
                         # WAREHOUSE=sql.WAREHOUSE
                         # df_warehouse=fn.get_model_run_date(WAREHOUSE)
                         # df_setup = fn.sql_to_dataframe(sql.WAREHOUSE_WO_RESOURCE_MONITOR)
-                        df_setup=df_warehouse[df_warehouse["resource_monitor"]=='null'][["name","size"]]
+                        df_setup=df_warehouse[df_warehouse["resource_monitor"]=='null'][["WAREHOUSE_NAME","WAREHOUSE_SIZE"]]
                         
                     elif sel_opt == "Idle Users":
                         date_from, date_to = date_selection('d1')
@@ -208,7 +212,7 @@ def main():
                         df_setup = fn.sql_to_dataframe(sql.IDLE_WAREHOUSES.format(
                             date_from=date_from,
                             date_to=date_to))
-                        df_setup=df_warehouse[~df_warehouse.name.isin(df_setup["WAREHOUSE_NAME"])]
+                        df_setup=df_warehouse[~df_warehouse.WAREHOUSE_NAME.isin(df_setup["WAREHOUSE_NAME"])]
 
                     if df_setup.empty:
                         st.write("No data found")
@@ -249,16 +253,14 @@ def main():
                         if df_billing.empty:
                             st.write("No data found")
                         else:
-                            df_expensive_queries = gui.dataframe_with_podium(
-                                                df_billing, "EXECUTION_TIME_SECONDS"
-                                                ).head(10)
+                            df_expensive_queries =df_billing.head(10)
                             st.markdown("<h4 style='text-align: center; color: black;'>Run History Of Most Expensive Queries</h4>", unsafe_allow_html=True)
                             fig = px.scatter(df_billing, x="START_TIME", y="EXECUTION_TIME_SECONDS",custom_data=["QUERY_ID","USER_NAME","ROLE_NAME","WAREHOUSE_SIZE"]).update_traces(hovertemplate='QueryID = %{customdata[0]}<br>Start Time = %{x}<br>Duration = %{y} seconds<br>Username = %{customdata[1]}<br> Role = %{customdata[2]}<br> Warehouse Size = %{customdata[3]}<extra></extra>')
                             fig.update_layout(xaxis_title='START TIME',yaxis_title='DURATION (Seconds)',width=1400,height=500)
                             st.write(fig)
                             with st.expander("🔎 Zoom into Top 10 expensive queries in detail"):
                                 for query in df_expensive_queries.itertuples():
-                                    st.write(f"**{query.Index}**.{query.QUERY_ID} - {query.EXECUTION_TIME_SECONDS} seconds - {query.USER_NAME} - {query.ROLE_NAME} - {query.WAREHOUSE_SIZE}""")
+                                    st.write(f"**{query.Index+1}**.{query.QUERY_ID} - {query.EXECUTION_TIME_SECONDS} seconds - {query.USER_NAME} - {query.ROLE_NAME} - {query.WAREHOUSE_SIZE}""")
                                     st.code(query.QUERY_TEXT, "sql")
 
                     # elif sel_metrics == 'Average Cost Per Query':
@@ -398,6 +400,8 @@ def main():
                             st.write(fig)
                         else:
                             dl1,dl2=st.columns([6,1])
+                            df_wh_cache_usg=df_wh_cache_usg.astype(str)
+                            df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE']=df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE'].add(' % ')
                             csv=df_wh_cache_usg.to_csv().encode('utf-8')
                             with dl2:st.download_button(label="Download Table",data=csv,file_name='Warehouse Cache Usage.csv',mime='text/csv')
                             st.table(df_wh_cache_usg.head(20))

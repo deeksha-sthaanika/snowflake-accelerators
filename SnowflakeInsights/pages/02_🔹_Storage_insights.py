@@ -15,6 +15,9 @@ style="""
 .css-184tjsw p{
 font-weight:bold
 }
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
+font-weight:bold
+}
 .css-163ttbj
 {
     background-color:#cae7f7
@@ -185,7 +188,7 @@ def main():
                 consumption = df["DATABASE_KILOBYTES"].sum()
 
                 if df.empty:
-                    st.caption("No data found.")
+                    st.caption("No data found")
                     st.stop()
                 if consumption == 0:
                     st.caption("No consumption!")
@@ -214,22 +217,25 @@ def main():
                 #     "**Storage** spend over time",
                 #     "Aggregated by day",
                 # )
-
+                
+                fig = px.bar(df_resampled, x='USAGE_DATE', y='DATABASE_KILOBYTES')
+                fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='DATABASE KILOBYTES',width=1500)
+                st.write(fig)
                 # Bar chart
-                chart = charts.get_bar_chart(
-                    df=df_resampled,
-                    date_column="USAGE_DATE",
-                    value_column="DATABASE_KILOBYTES",
-                )
+                # chart = charts.get_bar_chart(
+                #     df=df_resampled,
+                #     date_column="USAGE_DATE",
+                #     value_column="DATABASE_KILOBYTES",
+                # )
 
-                st.altair_chart(chart, use_container_width=True)
+                # st.altair_chart(chart, use_container_width=True)
 
                 st.markdown("<h4 style='text-align: center; color: black;'>Storage Usage </h4>", unsafe_allow_html=True)
                 df_storage_over_time=fn.sql_to_dataframe(sql.STORAGE_OVER_TIME.format(
                                         date_from=date_from,
                                         date_to=date_to))
                 fig = px.bar(df_storage_over_time, x="USAGE_DATE", y=["STORAGE","STAGE","FAILSAFE"],barmode = 'stack')
-                fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='STORAGE (MB)',width=1400,height=500)
+                fig.update_layout(xaxis_title='USAGE DATE',yaxis_title='STORAGE (MB)',legend_title='Storage Type',width=1400,height=500)
                 st.write(fig)
                 # st.write(
                 #     df_resampled.groupby(

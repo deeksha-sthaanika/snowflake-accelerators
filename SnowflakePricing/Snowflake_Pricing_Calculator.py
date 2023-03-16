@@ -75,7 +75,7 @@ def generate_agrid(df):
     NameList = ["XS","Small","Medium","Large","XL","2XL","3XL","4XL"]
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_column("Warehouse Size", editable=True, cellEditor='agSelectCellEditor', cellEditorParams={'values': NameList })
-    gb.configure_columns(['Warehouse Name','Maximum Clusters','Usage Per Day(hr)','No.Of Days Per Week'],editable=True)
+    gb.configure_columns(['Warehouse Name','Maximum Clusters','Usage Per Day (hr)','No.Of Days Per Week'],editable=True)
     gb.configure_selection(selection_mode="multiple", use_checkbox=True,header_checkbox=True) 
     vgo = gb.build()
     grid_response=AgGrid(df, gridOptions=vgo, theme='alpine',fit_columns_on_grid_load=True)
@@ -83,7 +83,7 @@ def generate_agrid(df):
 
 def add_row(grid_table):
     df = pd.DataFrame(grid_table['data'])
-    new_row = [['WH', 'XS','','','','','']]
+    new_row = [[sel_platform,sel_region,'WH', 'XS','','','','','']]
     df_empty = pd.DataFrame(new_row, columns=df.columns)
     df = pd.concat([df, df_empty], axis=0, ignore_index=True)
     df.to_csv('sample.csv', index=False)
@@ -111,6 +111,10 @@ elif sel_platform == 'Azure':
 else:
     df_price_sheet=pd.read_excel('Snowflake_Calculator_Latest.xlsx',sheet_name = 'GCP')
 
+df_aws_price=pd.read_excel('Snowflake_Calculator_Latest.xlsx',sheet_name = 'AWS')
+df_azure_price=pd.read_excel('Snowflake_Calculator_Latest.xlsx',sheet_name = 'Azure')
+df_gcp_price=pd.read_excel('Snowflake_Calculator_Latest.xlsx',sheet_name = 'GCP')
+
 df_price_sheet=df_price_sheet[df_price_sheet['Platform']==sel_platform].sort_values(by=['Region'])
 sel_region=st.sidebar.selectbox("Geography of application",df_price_sheet["Region"])
 edition=st.sidebar.selectbox("Edition",["Business Critical","Enterprise","Standard"])
@@ -129,7 +133,11 @@ with c1.form("storage_form"):
     st.write("")
     submitted = st.form_submit_button("Calculate")
 if submitted:
-    c1.metric("Storage Cost",Est_storage*df_price_sheet[storage_type])
+    st.session_state.storage_cost=Est_storage*df_price_sheet[storage_type]
+if "storage_cost" not in st.session_state:
+    c1.metric("Storage Cost ($)",0)
+else:
+    c1.metric("Storage Cost ($)",st.session_state.storage_cost)
 
 c2.markdown("<h3 style='text-align: center; color: black;'>Data Transfer</h3>", unsafe_allow_html=True)
 with c2.form("data_transfer_form"):
@@ -143,14 +151,17 @@ with c2.form("data_transfer_form"):
                                                             "Different cloud provider,Same continent","Different cloud provider,Different continent","Different cloud provider,Oceania"])
     submitted = st.form_submit_button("Calculate")
 if submitted:     
-    c2.metric("Data Transfer Cost",df_price_sheet[Transfer_Type]*data_transfer)
-
+    st.session_state.data_trans_cost=df_price_sheet[Transfer_Type]*data_transfer
+if "data_trans_cost" not in st.session_state:
+    c2.metric("Data Transfer Cost ($)",0)
+else:
+    c2.metric("Data Transfer Cost ($)",st.session_state.data_trans_cost)
 st.markdown("<h3 style='text-align: center; color: black;'>Compute</h3>", unsafe_allow_html=True)
 st.caption("Double click to add input to the columns")
 
 if 'Reset' not in st.session_state:
     st.session_state.Reset=True
-    df_raw=pd.DataFrame({'Warehouse Name':["WH"],'Warehouse Size':["XS"]},columns=['Warehouse Name','Warehouse Size','Maximum Clusters','Usage Per Day(hr)','No.Of Days Per Week'])
+    df_raw=pd.DataFrame({'Cloud Platform':sel_platform,'Region':sel_region,'Warehouse Name':["WH"],'Warehouse Size':["XS"],'Maximum Clusters':[0],'Usage Per Day (hr)':[0],'No.Of Days Per Week':[0]})#,columns=['Cloud Platform','Region','Warehouse Name','Warehouse Size','Maximum Clusters','Usage Per Day (hr)','No.Of Days Per Week'])
     df_raw.to_csv('sample.csv', index = False)
 df = get_data()
 grid=st.empty()
@@ -161,20 +172,49 @@ c1,c2,c3,c4=st.columns([4,1,1,5])
 delete_row_button = c2.button("Delete Row")
 if delete_row_button:
     df_del=delete_row(df, grid_response)
-    with grid:
-        df_del.to_csv('sample.csv', index = False)
-        grid_response=generate_agrid(df_del)
+    try:
+        with grid:
+            df_del.to_csv('sample.csv', index = False)
+            grid_response=generate_agrid(df_del)
+    except:
+        st.warning('Please select the rows to be deleted')
 c3.button("Add Row", on_click=add_row, args=[grid_response])
 cal=c4.button("Calculate")
 df_test=df
-df[["Credits Per Month","Amount Per Month"]]=0
+df[["Credits Per Month","Amount Per Month ($)"]]=0
 if cal:
     for i in range(len(df)):
         wh_sz=df["Warehouse Size"].iloc[i]
-        df_price_sheet=df_price_sheet[(df_price_sheet["Platform"]==sel_platform) & (df_price_sheet["Region"]==sel_region)]
-        df["Credits Per Month"].iloc[i]=df["Maximum Clusters"].iloc[i]*df_price_sheet[wh_sz]*df["Usage Per Day(hr)"].iloc[i]*df["No.Of Days Per Week"].iloc[i]*4.345
-        df["Amount Per Month"].iloc[i]=df["Credits Per Month"].iloc[i]*df_price_sheet[edition]
-    
-    with grid:
-        df.to_csv('sample.csv', index = False)
-        grid_response=generate_agrid(df)
+        if df["Cloud Platform"].iloc[i] == 'AWS':
+            df_price_sheet=df_aws_price
+        elif df["Cloud Platform"].iloc[i] == 'Azure':
+            df_price_sheet=df_azure_price
+        else:
+            df_price_sheet=df_gcp_price
+        df_price_sheet=df_price_sheet[(df_price_sheet["Platform"]==df["Cloud Platform"].iloc[i]) & (df_price_sheet["Region"]==df["Region"].iloc[i])]
+        df["Credits Per Month"].iloc[i]=df["Maximum Clusters"].iloc[i]*df_price_sheet[wh_sz]*df["Usage Per Day (hr)"].iloc[i]*df["No.Of Days Per Week"].iloc[i]*4.345
+        df["Amount Per Month ($)"].iloc[i]=df["Credits Per Month"].iloc[i]*df_price_sheet[edition]
+    try:
+        with grid:
+            df.to_csv('sample.csv', index = False)
+            grid_response=generate_agrid(df)
+    except:
+        st.warning("Please fill/update the required input columns")
+
+st.write("")
+st.markdown("<h4 style='text-align: center; color: Blue;'>Total Summary</h4>", unsafe_allow_html=True)
+col1,col2,col3=st.columns([9,6,5])
+total_cost=col2.button("Total Cost ($)")
+if total_cost:
+    if (len(grid_response["selected_rows"])==0) or (len(grid_response["selected_rows"])>1):
+        st.warning("Please select a single row for total calculation")
+    else:
+        try:
+            selected_rows=pd.DataFrame(grid_response["selected_rows"])
+            if selected_rows["Cloud Platform"].iloc[0] == sel_platform:
+                total=st.session_state.storage_cost.iloc[0]+st.session_state.data_trans_cost.iloc[0]+selected_rows["Amount Per Month ($)"].iloc[0]
+                col2.metric("",round(total,2))
+            else:
+                st.warning("Please select a row with same cloud Platform")
+        except:
+            st.warning("Calculate storage,data transfer and compute cost to populate total cost")
