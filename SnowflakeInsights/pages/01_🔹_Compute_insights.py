@@ -307,7 +307,7 @@ def main():
                             date_to=date_to,
                         )
                     )
-
+                    warehouse_usage_hourly.rename(columns = {'START_TIME':'TIME','CREDITS_USED_COMPUTE':'CREDITS_USED'}, inplace = True)
                     # Add filtering widget per Warehouse name
                     warehouses = warehouse_usage_hourly.WAREHOUSE_NAME.unique()
                     selected_warehouse = st.selectbox(
@@ -325,24 +325,26 @@ def main():
                         warehouse_usage_hourly_filtered,
                         date_from,
                         date_to,
-                        value_column="CREDITS_USED_COMPUTE",
+                        value_column="CREDITS_USED",
                     )
 
                     gui.subsubheader("Time-histogram of **warehouse usage**")
 
                     plost.time_hist(
                         data=warehouse_usage_hourly_filtered,
-                        date="START_TIME",
+                        date="TIME",
                         x_unit="day",
                         y_unit="hours",
                         color={
-                            "field": "CREDITS_USED_COMPUTE",
+                            "field": "CREDITS_USED",
                             "scale": {
                                 "scheme": charts.ALTAIR_SCHEME,
                             },
                         },
                         aggregate=None,
                         legend=None,
+                        pan_zoom="pan",
+                        use_container_width=True
                     )
 
                     # -----------------
