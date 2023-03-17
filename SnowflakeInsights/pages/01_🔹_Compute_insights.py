@@ -308,6 +308,7 @@ def main():
                         )
                     )
                     warehouse_usage_hourly.rename(columns = {'START_TIME':'TIME','CREDITS_USED_COMPUTE':'CREDITS_USED'}, inplace = True)
+                   
                     # Add filtering widget per Warehouse name
                     warehouses = warehouse_usage_hourly.WAREHOUSE_NAME.unique()
                     selected_warehouse = st.selectbox(
