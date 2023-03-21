@@ -4,6 +4,7 @@ from snowflake.connector.connection import SnowflakeConnection
 from utils import sql as sql
 import functions as fn  
 from PIL import Image
+import time
 # footer {visibility: hidden;}
 
 st.set_page_config(page_title="Login Page", page_icon="🏠", layout="wide")
@@ -100,7 +101,6 @@ try:
             acc = acc_plc.text_input("Account Name",key="text3")
         else: 
             acc = acc_plc.text_input("Account Name",st.session_state.account,key="text3")
-
         if len(acc)<=0:
             a_err=st.empty()
             # a_err.error("Account Name field cannot be Empty!")
@@ -113,7 +113,6 @@ try:
         else:    
             username = un_plc.text_input("User Name",st.session_state.usrname,key="text1")
 
-
         if len(username)<=0:
             u_err=st.empty()
             # u_err.error("Username field cannot be Empty!")
@@ -125,10 +124,11 @@ try:
             st.session_state.sso=sso_chkbx.checkbox("Sign in using OKTA SSO")
 
         pwd_plc=st.empty()
+        
         if not st.session_state.sso:
             if 'password_ip' not in st.session_state:
                 st.session_state.password_ip = ""
-                pwd = pwd_plc.text_input("Password",type='password',key="text2")
+                pwd = pwd_plc.text_input("Password",value='',type='password',key="text2")
             else: 
                 pwd = pwd_plc.text_input("Password",st.session_state.password_ip,type='password',key="text2")
 
@@ -140,19 +140,16 @@ try:
         
 
             st.session_state.password_ip=pwd
+            
         st.session_state.usrname=username
         st.session_state.account=acc
 
         def clear_text():
-            # st.write(st.session_state)
-            # st.session_state["text1"] = ""
-            # st.session_state["text2"] = ""
-            # st.session_state["text3"] = ""
-            # st.session_state.usrname=''
-            # st.session_state.password_ip=''
-            # st.session_state.account=''
-            st.session_state.clear()
-            # st.write(st.session_state)
+            st.write(st.session_state)
+            st.session_state["text1"] = ""
+            st.session_state["text2"] = ""
+            st.session_state["text3"] = ""
+
 
     c1, c2, c3, c4 = st.columns([4,1,1,4])
     with c2:

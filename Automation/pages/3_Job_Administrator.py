@@ -3,10 +3,13 @@ st.set_page_config(page_title="Job Automation", page_icon="gear.png", layout="wi
 import pandas as pd # read csv, df manipulation
 from utils import sql as sql
 import os
+import time
 import functions as fn
+from random import randint
 from PIL import Image
 from st_aggrid import AgGrid,GridUpdateMode,DataReturnMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
+# from .session_state import get_session_state
 
 with st.container():
     cola,colb=st.columns([1,4])
@@ -138,6 +141,15 @@ try:
             st.session_state.password_ip=''
             st.session_state.account=''
         if st.session_state.success_param:
+            def clear_form(uploaded_file):
+                st.session_state["q_name"]=""
+                st.session_state["q_sql"]=""
+                st.session_state["q_run"]=1
+                del st.session_state["file"]
+                uploaded_file = file_up.file_uploader("Choose file ",key='q_file_replace')
+                # uploaded_file.seek(0)
+                # state.file_key=str(randint(1000, 100000000))
+
             def save_uploadedfile(uploadedfile):
                 with open(os.path.join(uploadedfile.name),"wb") as f:
                     f.write(uploadedfile.getbuffer())
@@ -181,11 +193,15 @@ try:
                 entry_sel=st.radio("How do you want to load?",["Single Line","Bulk Load"],horizontal=True)
 
                 if entry_sel=="Single Line":
+                    # st.write(st.session_state)
+                    # st.write("Beginning")
+                    # time.sleep(10)
+                    # st.write("Sleep done")
                     if 'q_jname' not in st.session_state:
                         jobname=st.text_input("Job Script Name",key='q_name')
                     else:
                         jobname=st.text_input("Job Script Name",st.session_state.q_jname,key='q_name')
-
+                    st.session_state.q_jname=jobname
                     df_jobname_sel=df_scripts[df_scripts["SCRIPT_NAME"]==jobname]
 
                     with st.expander("View Sequence Ids"):
@@ -210,22 +226,28 @@ try:
                             STAGE=sql.STAGE
                             df_stage=fn.get_query_data(STAGE,st.session_state.usrname)
                             stage=st.selectbox("Staging Area ",df_stage["name"])
-
+                            # state=get_session_state()
+                            # if not state.file_key:
+                            #     state.file_key = str(randint(1000, 100000000))
+                            file_up=st.empty()
                             if 'file' not in st.session_state:
-                                uploaded_file = st.file_uploader("Choose file ")   
+                                uploaded_file = file_up.file_uploader("Choose file ",key='q_file_new')   
                             else:
-                                uploaded_file = st.file_uploader("Choose file ",st.session_state.file)
+                                uploaded_file = file_up.file_uploader("Choose file ",st.session_state.file,key='q_file')
+                            st.session_state.file=uploaded_file
                         else:
                             if 'q_sql' not in st.session_state:
                                 sql_input = st.text_area("SQL Command",)   
                             else:
                                 sql_input = st.text_area("SQL Command",st.session_state.q_sql)
-
+                            st.session_state.q_sql=sql_input
                         c_on_error= st.selectbox("Continue on error?",["False","True"],key='q_err')
                         
                         ignore_scrpt=st.selectbox("Ignore script?",["N","Y"],key='q_igsc')
 
-                        execute=st.button('Create Job',key='q_exec')
+                        cl1,cl2=st.columns([1,7])
+                        execute=cl1.button('Create Job',key='q_exec')
+                        reset=cl2.button('Reset Form',key='rst',on_click=clear_form,args=uploaded_file)
                         # jobid=df_runid["JOB_ID"].iloc[0]
                     
                     if (runid not in run_lst )and execute:
@@ -262,6 +284,7 @@ try:
                                 df_insert=fn.get_query_data(INSERT_JOB_SCRIPT,st.session_state.usrname)
 
                                 st.success("Succesfully Inserted")
+                                st.experimental_rerun()
                         else:
                             st.warning('Please enter all the fields')
                 else:
@@ -400,6 +423,7 @@ try:
                                 DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg2=update_filter)
                                 df_insert=fn.get_query_data(DELETE_JOB_SCRIPT,st.session_state.usrname) 
                             st.success("Deleted Successfully")
+                            st.experimental_rerun()
             with tab3:
                 # st.write("WIP") 
                 st.subheader("Create Tasks")
