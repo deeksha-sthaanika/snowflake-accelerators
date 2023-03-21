@@ -359,12 +359,12 @@ def main():
                         with col2:
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb2')
                         if format1 == 'Graph form':
-                            fig = px.bar(df_heavy_scanners, x='USER_NAME', y='AVG_PCT_SCANNED',color="WAREHOUSE_NAME")
+                            fig = px.bar(df_heavy_scanners, x='USER_NAME', y='AVG_PCT_SCANNED',color="WAREHOUSE_NAME",custom_data=["WAREHOUSE_NAME"]).update_traces(hovertemplate='WAREHOUSE NAME = %{customdata[0]}<br>USER NAME = %{x}<br>AVG. PERCENTAGE SCANNED = %{y} %<extra></extra>')
                             fig.update_layout(xaxis_title='USERNAME',yaxis_title='AVG. PERCENTAGE SCANNED',width=1400,height=500)
                             st.write(fig)
                         else:
                             dl1,dl2=st.columns([6,1])
-                            df_heavy_scanners["AVG_PCT_SCANNED"]=df_heavy_scanners["AVG_PCT_SCANNED"].astype(str)
+                            df_heavy_scanners["AVG_PCT_SCANNED"]=df_heavy_scanners["AVG_PCT_SCANNED"].astype(str).add(' % ')
                             csv=df_heavy_scanners.to_csv().encode('utf-8')
                             with dl2:st.download_button(label="Download Table",data=csv,file_name='Heavy Scanners.csv',mime='text/csv')
                             st.table(df_heavy_scanners.head(20))
@@ -390,10 +390,11 @@ def main():
                         df_wh_cache_usg = fn.sql_to_dataframe(sql.WAREHOUSE_CACHE_USAGE.format(
                             date_from=date_from,
                             date_to=date_to))
+                        df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE']=df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE'].astype(str).add(' % ')
                         st.markdown("<h4 style='text-align: center; color: black;'>Warehouse Cache Usage</h4>", unsafe_allow_html=True)
                         col1,col2,col3=st.columns([3,2,2])
                         with col2:
-                            format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb2')
+                            format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb3')
                         if format1 == 'Graph form':
                             fig = px.bar(df_wh_cache_usg, x='WAREHOUSE_NAME', y='GB_SCANNED',hover_data=['QUERY_COUNT','GB_SCANNED_FROM_CACHE','PERCENT_SCANNED_FROM_CACHE'])
                             fig.update_layout(xaxis_title='WAREHOUSE NAME',yaxis_title='GB SCANNED',width=1400,height=500)
@@ -401,7 +402,6 @@ def main():
                         else:
                             dl1,dl2=st.columns([6,1])
                             df_wh_cache_usg=df_wh_cache_usg.astype(str)
-                            df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE']=df_wh_cache_usg['PERCENT_SCANNED_FROM_CACHE'].add(' % ')
                             csv=df_wh_cache_usg.to_csv().encode('utf-8')
                             with dl2:st.download_button(label="Download Table",data=csv,file_name='Warehouse Cache Usage.csv',mime='text/csv')
                             st.table(df_wh_cache_usg.head(20))

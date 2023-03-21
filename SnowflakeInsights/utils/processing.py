@@ -19,7 +19,7 @@ def resample_date_period(
     for the full date period from date_from to date_to."""
 
     empty_df = pd.DataFrame()
-    empty_df["START_TIME"] = pd.date_range(date_from, date_to, freq="H")
+    empty_df["TIME"] = pd.date_range(date_from, date_to, freq="H")
     empty_df[value_column] = 0
     return empty_df.append(
         df,

@@ -69,124 +69,141 @@ div.stButton > button:active {
 </style>""", unsafe_allow_html=True)
 
 # Make sure session state is preserved
-col1,col2,col3=st.columns([1,1.5,1])
-with col2:
-    head=st.empty()
-    head.markdown("<h4 style='text-align: center;'>Sign in to Snowflake</h4>", unsafe_allow_html=True)
+try:
+    col1,col2,col3=st.columns([1,1.5,1])
+    with col2:
+        head=st.empty()
+        head.markdown("<h4 style='text-align: center;'>Sign in to Snowflake</h4>", unsafe_allow_html=True)
 
-    for key in st.session_state:
-        st.session_state[key] = st.session_state[key]
+        for key in st.session_state:
+            st.session_state[key] = st.session_state[key]
 
-    #st.title("Welcome to the Usage Insights app!")
-    #st.sidebar.warning('Do not leave any fields empty!', icon="⚠️")
-    acc_plc=st.empty()
-    if 'account' not in st.session_state:
-        st.session_state.account = ""
-        acc = acc_plc.text_input("Account Name",key="text3")
-    else: 
-        acc = acc_plc.text_input("Account Name",st.session_state.account,key="text3")
+        #st.title("Welcome to the Usage Insights app!")
+        #st.sidebar.warning('Do not leave any fields empty!', icon="⚠️")
+        acc_plc=st.empty()
+        if 'account' not in st.session_state:
+            st.session_state.account = ""
+            acc = acc_plc.text_input("Account Name",key="text3")
+        else: 
+            acc = acc_plc.text_input("Account Name",st.session_state.account,key="text3")
 
-    if len(acc)<=0:
-        a_err=st.empty()
-        #a_err.error("Account Name field cannot be Empty!")
+        if len(acc)<=0:
+            a_err=st.empty()
+            #a_err.error("Account Name field cannot be Empty!")
 
-    un_plc=st.empty()
-    if 'usrname' not in st.session_state:
-        st.session_state.usrname = ""
-        username = un_plc.text_input("User Name",key="text1")
-    else:    
-        username = un_plc.text_input("User Name",st.session_state.usrname,key="text1")
+        un_plc=st.empty()
+        if 'usrname' not in st.session_state:
+            st.session_state.usrname = ""
+            username = un_plc.text_input("User Name",key="text1")
+        else:    
+            username = un_plc.text_input("User Name",st.session_state.usrname,key="text1")
 
 
-    if len(username)<=0:
-        u_err=st.empty()
-        #u_err.error("Username field cannot be Empty!")
-
-    pwd_plc=st.empty()
-    if 'password_ip' not in st.session_state:
-        st.session_state.password_ip = ""
-        pwd = pwd_plc.text_input("Password",type='password',key="text2")
-    else: 
-        pwd = pwd_plc.text_input("Password",st.session_state.password_ip,type='password',key="text2")
-
-    if len(pwd)<=0:
-        p_err=st.empty()
-        #p_err.error("Password field cannot be Empty!")
-
-    st.session_state.password_ip=pwd
-    st.session_state.usrname=username
-    st.session_state.account=acc
-
-    def clear_text():
-        # st.session_state["text1"] = ""
-        # st.session_state["text2"] = ""
-        # st.session_state["text3"] = ""
-        # st.session_state["text4"] = ""
-        # st.session_state["text5"] = ""
-        st.session_state.clear()
-
-c1, c2, c3, c4 = st.columns([4,1,1,4])
-with c2:
-    login_plc=st.empty()
-    Login=login_plc.button('Login')
-with c3:
-    reset_plc=st.empty()
-    Reset=reset_plc.button('Reset',on_click=clear_text)
-
-if 'success_param' not in st.session_state:
-    st.session_state.success_param = False
-
-if st.session_state.success_param:
-    un_plc.info("Logged in as "+username+" Please Logout to switch User")
-    head.write("")
-    pwd_plc.write("")
-    acc_plc.write("")
-    login_plc.write("")
-    reset_plc.write("")
-    logout=st.sidebar.button("Logout")
-    if logout:
-        un_plc.write("")
-        st.success("Successfully Logged out "+username)
-        st.button('Login Again',on_click=clear_text)
-        # Login_agn=st.button('Login Again')
-        # if Login_agn:
-        #     st.session_state.clear_text()
-else:
-    if Login:
-        if len(username)>0 and len(pwd)>0 and len(acc)>0:        
-            try:        
-                snowflake_connector = fn.get_connector(      
-                secrets_key="sf_usage_app",  
-                input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#'warehouse':st.session_state.whname,'role':st.session_state.role
-                use_browser=False,)
-                un_plc.success("Logged In as {}. Please choose a page".format(st.session_state.usrname))
-        
-                st.session_state.success_param = True 
-                head.write("")
-                pwd_plc.write("")
-                acc_plc.write("")
-                login_plc.write("")
-                reset_plc.write("")
-                logout=st.sidebar.button("Logout")
- 
-            except:        
-                st.error("Incorrect Username/Password")
+        if len(username)<=0:
+            u_err=st.empty()
+            #u_err.error("Username field cannot be Empty!")
+        sso_chkbx=st.empty()
+        if 'sso' not in st.session_state:
+            st.session_state.sso=sso_chkbx.checkbox("Sign in using OKTA SSO")
         else:
-            col2.error("Please enter all the fields")
+            st.session_state.sso=sso_chkbx.checkbox("Sign in using OKTA SSO")
 
-if Reset:
-    st.session_state.password_ip=""
-    st.session_state.usrname=""
-    st.session_state.account=""
- 
+        pwd_plc=st.empty()
+        if not st.session_state.sso:
+            if 'password_ip' not in st.session_state:
+                st.session_state.password_ip = ""
+                pwd = pwd_plc.text_input("Password",type='password',key="text2")
+            else: 
+                pwd = pwd_plc.text_input("Password",st.session_state.password_ip,type='password',key="text2")
 
-st.sidebar.info("Choose a page!")
-# st.markdown(
-#     """
-# This app provides insights on a demo Snowflake account usage.
+            if len(pwd)<=0:
+                p_err=st.empty()
+                #p_err.error("Password field cannot be Empty!")
 
-# ### Get started!
+            st.session_state.password_ip=pwd
+        st.session_state.usrname=username
+        st.session_state.account=acc
 
-# 👈 Select a page in the sidebar!
-#     """
-# ) 
+        def clear_text():
+            # st.session_state["text1"] = ""
+            # st.session_state["text2"] = ""
+            # st.session_state["text3"] = ""
+            # st.session_state["text4"] = ""
+            # st.session_state["text5"] = ""
+            st.session_state.clear()
+
+    c1, c2, c3, c4 = st.columns([4,1,1,4])
+    with c2:
+        login_plc=st.empty()
+        Login=login_plc.button('Login')
+    with c3:
+        reset_plc=st.empty()
+        Reset=reset_plc.button('Reset',on_click=clear_text)
+
+    if 'success_param' not in st.session_state:
+        st.session_state.success_param = False
+
+    if st.session_state.success_param:
+        un_plc.info("Logged in as "+username+" Please Logout to switch User")
+        head.write("")
+        sso_chkbx.write("")
+        pwd_plc.write("")
+        acc_plc.write("")
+        login_plc.write("")
+        reset_plc.write("")
+        logout=st.sidebar.button("Logout")
+        if logout:
+            un_plc.write("")
+            st.success("Successfully Logged out "+username)
+            st.button('Login Again',on_click=clear_text)
+            # Login_agn=st.button('Login Again')
+            # if Login_agn:
+            #     st.session_state.clear_text()
+    else:
+        if Login:
+            #if len(username)>0 and len(pwd)>0 and len(acc)>0:        
+                try: 
+                    if st.session_state.sso:
+                        input={'user':st.session_state.usrname,'account':st.session_state.account}
+                        browser=True
+                    else:
+                        input={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account}
+                        browser=False       
+                    snowflake_connector = fn.get_connector(      
+                    secrets_key="sf_usage_app",  
+                    input_params=input,#'warehouse':st.session_state.whname,'role':st.session_state.role
+                    use_browser=browser,)
+                    un_plc.success("Logged In as {}. Please choose a page".format(st.session_state.usrname))
+            
+                    st.session_state.success_param = True 
+                    head.write("")
+                    sso_chkbx.write("")
+                    pwd_plc.write("")
+                    acc_plc.write("")
+                    login_plc.write("")
+                    reset_plc.write("")
+                    logout=st.sidebar.button("Logout")
+    
+                except:        
+                    st.error("Incorrect Username/Password")
+            # else:
+            #     col2.error("Please enter all the fields")
+
+    if Reset:
+        st.session_state.password_ip=""
+        st.session_state.usrname=""
+        st.session_state.account=""
+    
+
+    st.sidebar.info("Choose a page!")
+    # st.markdown(
+    #     """
+    # This app provides insights on a demo Snowflake account usage.
+
+    # ### Get started!
+
+    # 👈 Select a page in the sidebar!
+    #     """
+    # )
+except Exception as e:
+    st.error(e) 

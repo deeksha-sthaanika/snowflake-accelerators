@@ -49,10 +49,16 @@ def get_connector(
 
 @st.cache_data(ttl=10,show_spinner=False)#ttl=60*60,
 def sql_to_dataframe(sql_query: str) -> pd.DataFrame:
+    if st.session_state.sso:
+        input={'user':st.session_state.usrname,'account':st.session_state.account}
+        browser=True
+    else:
+        input={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account}
+        browser=False
     snowflake_connector = get_connector(   
     secrets_key="sf_usage_app",  
-    input_params={'user':st.session_state.usrname,'password':st.session_state.password_ip,'account':st.session_state.account},#,'warehouse':st.session_state.whname,'role':st.session_state.role
-    use_browser=False,)
+    input_params=input,#,'warehouse':st.session_state.whname,'role':st.session_state.role
+    use_browser=browser)
     data = pd.read_sql(
         sql_query,snowflake_connector
     )
