@@ -4,6 +4,7 @@ from typing import Any, Dict
 from snowflake.connector import connect
 from snowflake.connector.connection import SnowflakeConnection
 import functions as fn
+from PIL import Image
 
 from utils import gui
 
@@ -70,6 +71,9 @@ div.stButton > button:active {
 
 # Make sure session state is preserved
 try:
+    c1,c2,c3,c4=st.columns([5,3,2,1])
+    image = Image.open('Snowatch_logo.png')
+    c2.image(image, caption='')
     col1,col2,col3=st.columns([1,1.5,1])
     with col2:
         head=st.empty()
@@ -125,9 +129,9 @@ try:
         st.session_state.account=acc
 
         def clear_text():
-            # st.session_state["text1"] = ""
-            # st.session_state["text2"] = ""
-            # st.session_state["text3"] = ""
+            st.session_state["text1"] = ""
+            st.session_state["text2"] = ""
+            st.session_state["text3"] = ""
             # st.session_state["text4"] = ""
             # st.session_state["text5"] = ""
             st.session_state.clear()

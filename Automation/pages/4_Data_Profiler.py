@@ -1,5 +1,5 @@
 import streamlit as st # web development
-st.set_page_config(page_title="Data Profiler", page_icon="gear.png", layout="wide")
+st.set_page_config(page_title="Data Profiler", page_icon="SnowProc_logo.png", layout="wide")
 import numpy as np # np mean, np random 
 import pandas as pd # read csv, df manipulation
 from utils import sql as sql

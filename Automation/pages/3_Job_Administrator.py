@@ -1,5 +1,5 @@
 import streamlit as st # web development
-st.set_page_config(page_title="Job Automation", page_icon="gear.png", layout="wide")
+st.set_page_config(page_title="Job Automation", page_icon="SnowProc_logo.png", layout="wide")
 import pandas as pd # read csv, df manipulation
 from utils import sql as sql
 import os
