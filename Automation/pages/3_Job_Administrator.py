@@ -141,14 +141,13 @@ try:
             st.session_state.password_ip=''
             st.session_state.account=''
         if st.session_state.success_param:
-            def clear_form(uploaded_file):
+            def clear_form():
                 st.session_state["q_name"]=""
                 st.session_state["q_sql"]=""
                 st.session_state["q_run"]=1
                 del st.session_state["file"]
                 uploaded_file = file_up.file_uploader("Choose file ",key='q_file_replace')
-                # uploaded_file.seek(0)
-                # state.file_key=str(randint(1000, 100000000))
+
 
             def save_uploadedfile(uploadedfile):
                 with open(os.path.join(uploadedfile.name),"wb") as f:
@@ -233,7 +232,7 @@ try:
                             if 'file' not in st.session_state:
                                 uploaded_file = file_up.file_uploader("Choose file ",key='q_file_new')   
                             else:
-                                uploaded_file = file_up.file_uploader("Choose file ",st.session_state.file,key='q_file')
+                                uploaded_file = file_up.file_uploader("Choose file ",key='q_file')
                             st.session_state.file=uploaded_file
                         else:
                             if 'q_sql' not in st.session_state:
@@ -247,7 +246,7 @@ try:
 
                         cl1,cl2=st.columns([1,7])
                         execute=cl1.button('Create Job',key='q_exec')
-                        reset=cl2.button('Reset Form',key='rst',on_click=clear_form,args=uploaded_file)
+                        reset=cl2.button('Reset Form',key='rst',on_click=clear_form)
                         # jobid=df_runid["JOB_ID"].iloc[0]
                     
                     if (runid not in run_lst )and execute:
