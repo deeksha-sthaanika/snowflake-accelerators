@@ -7,7 +7,7 @@ from PIL import Image
 import time
 # footer {visibility: hidden;}
 
-st.set_page_config(page_title="Login Page", page_icon="🏠", layout="wide")
+st.set_page_config(page_title="Login Page", page_icon="SnowProc_logo.png", layout="wide")
 footer="""<style>
 .footer {
 position: fixed;
@@ -66,19 +66,17 @@ color:white;
 
 
 # st.image('Fractal-Logo-WithBL.png',width=160)
-st.markdown("<h1 style='text-align: center;color: #098BCB;'>Welcome to SnowProcSQLite</h1>", unsafe_allow_html=True)
-# st.title("Welcome to the Snowflake Job Automation!")
+c1,c2,c3,c4=st.columns([4.2,3,2,1])
+image = Image.open('SnowProc_logo.png')
+c2.image(image,width=250, caption='')
+st.markdown("<h1 style='text-align:center ;color: #098BCB;'>Welcome to SnowProcSQLite</h1>", unsafe_allow_html=True)
 
-# st.image('snowflake-logo.png',width=50)
 try:
+
     col1,col2,col3=st.columns([1,1.5,1])
     with col2:
 
-        st.markdown("<h4 style='text-align: center;padding: 4% 4% 4% 4%'> </h4>", unsafe_allow_html=True)
-
-
-        image1 = Image.open('snowflake-logo.png')
-        image2='snowflake-logo.png'
+        st.markdown("<h5 style='text-align: center;padding: 2% 2% 2% 2%'> </h5>", unsafe_allow_html=True)
         
         # st.markdown("<p align=center><img src='"+image2+"'alt='Snowflake'></p>",unsafe_allow_html=True)
         head=st.empty()
@@ -145,13 +143,13 @@ try:
         st.session_state.account=acc
 
         def clear_text():
-            st.write(st.session_state)
             st.session_state["text1"] = ""
             st.session_state["text2"] = ""
             st.session_state["text3"] = ""
+            st.session_state.clear()
 
 
-    c1, c2, c3, c4 = st.columns([4,1,1,4])
+    c1, c2, c3, c4 = st.columns([4.5,1,1,4])
     with c2:
         login_plc=st.empty()
         Login=login_plc.button('Login')

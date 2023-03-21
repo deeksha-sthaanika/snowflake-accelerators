@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="Task Manager", page_icon="gear.png", layout="wide")
+st.set_page_config(page_title="Task Manager", page_icon="SnowProc_logo.png", layout="wide")
 import pandas as pd
 from datetime import datetime
 import tzlocal
