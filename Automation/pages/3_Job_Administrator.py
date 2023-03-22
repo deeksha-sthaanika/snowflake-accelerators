@@ -145,6 +145,11 @@ try:
                 st.session_state["q_name"]=""
                 st.session_state["q_sql"]=""
                 st.session_state["q_run"]=1
+                
+                st.session_state["task_name"]=""
+                st.session_state["t_sql"]=""
+                st.session_state["cron"]=""
+                st.session_state["minute"]=1
                 del st.session_state["file"]
                 uploaded_file = file_up.file_uploader("Choose file ",key='q_file_replace')
 
@@ -460,9 +465,9 @@ try:
                     else:
                         st.info("Please Validate the SQL before creating task!")
                         if 't_sql' not in st.session_state:
-                            sql_input_task = st.text_area("SQL Command")   
+                            sql_input_task = st.text_area("SQL Command",key='t_sql')   
                         else:
-                            sql_input_task = st.text_area("SQL Command",st.session_state.t_sql)
+                            sql_input_task = st.text_area("SQL Command",st.session_state.t_sql,key='t_sql')
                         STORED_PROC_RUN_ID_ARR=sql_input_task
                     
                     val=task_name+" WAREHOUSE='"+wh+"'"
@@ -483,14 +488,17 @@ try:
                             if 'minute' not in st.session_state:
                                 minute=st.number_input("Minute",key='minute',min_value=1,max_value=11520)
                             else:
-                                minute=st.number_input("Minute",st.session_state.minute,max_value=11520,key='minute')
+                                minute=st.number_input("Minute",min_value=1,max_value=11520,key='minute')
                             # c2.write(" MINUTE")
                             sch=str(minute)+" MINUTE"
                     else:
                         child_task=st.multiselect("Choose dependent tasks",df_task["NAME"],df_task["NAME"].iloc[0])
                         child_task= ','.join(map(str, child_task))             
                     
-                    create_btn=st.button("Create Task")
+                    st.write("")
+                    cl1,cl2=st.columns([1,7])
+                    create_btn=cl1.button("Create Task")
+                    reset_task=cl2.button("Reset Form",key='reset_task',on_click=clear_form)
 
                     if create_btn:
                         if task_name and ((runid_sel and script_selected) or sql_input_task):
