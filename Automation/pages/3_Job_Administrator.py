@@ -186,13 +186,16 @@ try:
             df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
             
             # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
-            SCRIPT_NAME=sql.SCRIPT_NAME
+            common_db='_SNDBX'
+            
+            SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=common_db)
             df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
             df_scripts["CONTINUE_ON_ERROR"]=df_scripts["CONTINUE_ON_ERROR"].astype(str)
 
-            tab1,tab2,tab3=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks"])
+            tab1,tab2,tab3,tab4=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks","Promote Jobs"])
             with tab1:
+                
                 st.subheader("Create Jobs")
                 entry_sel=st.radio("How do you want to load?",["Single Line","Bulk Load"],horizontal=True)
 
@@ -216,7 +219,7 @@ try:
                     else:
                         runid=st.number_input("Sequence Id",st.session_state.q_rid,key='q_run',min_value=1,step=1)
                     
-                    SEQ_ID=sql.SEQ_ID.format(arg2=jobname)
+                    SEQ_ID=sql.SEQ_ID.format(arg1=common_db,arg2=jobname)
                     df_runid=fn.get_query_data(SEQ_ID,st.session_state.usrname)
                     run_lst=list(df_runid["SEQ_ID"])
 
@@ -244,6 +247,8 @@ try:
                                 sql_input = st.text_area("SQL Command",)   
                             else:
                                 sql_input = st.text_area("SQL Command",st.session_state.q_sql)
+                            sql_input1=sql_input.replace("'","''")
+                            # st.write(sql_input1)
                             st.session_state.q_sql=sql_input
                         c_on_error= st.selectbox("Continue on error?",["False","True"],key='q_err')
                         
@@ -268,7 +273,7 @@ try:
                                     #     colname="JOB_ID,SCRIPT_NAME,RUN_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
                                     #     val=str(jobid)+",'"+jobname+"',"+str(runid)+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
 
-                                    INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg2=colname,arg3=val)
+                                    INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg1=common_db,arg2=colname,arg3=val)
                                     df_insert=fn.get_query_data(INSERT_JOB_SCRIPT,st.session_state.usrname)
 
                                     st.success("Succesfully Inserted")
@@ -278,13 +283,13 @@ try:
                             else:
                                 # if len(run_lst)==0:
                                 colname="SCRIPT_NAME,SEQ_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
-                                val="'"+jobname+"',"+str(runid)+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
+                                val="'"+jobname+"',"+str(runid)+",'"+sql_input1+"','"+c_on_error+"','"+ignore_scrpt+"'"
                                 # else:
                                 #     jobid=df_runid["JOB_ID"].iloc[0]
                                 #     colname="JOB_ID,SCRIPT_NAME,RUN_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
                                 #     val=str(jobid)+",'"+jobname+"',"+str(runid)+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
 
-                                INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg2=colname,arg3=val)
+                                INSERT_JOB_SCRIPT=sql.INSERT_JOB_SCRIPT.format(arg1=common_db,arg2=colname,arg3=val)
                                 df_insert=fn.get_query_data(INSERT_JOB_SCRIPT,st.session_state.usrname)
 
                                 st.success("Succesfully Inserted")
@@ -304,7 +309,7 @@ try:
                         load_file=st.button("Load File")
                         if load_file:
                             try:
-                                fn.dataframe_sql_to(df,'SNDBX_DEMO_DB','DEMO_WORK_INTERIM','JOB_SCRIPTS',st.session_state.usrname)
+                                fn.dataframe_sql_to(df,'SNDBX_DEMO_DB','DEMO_WORK_INTERIM','JOB_SCRIPTS_SNDBX',st.session_state.usrname)
                                 st.write("File Uploaded")
                             except:
                                 st.write("Please upload file")
@@ -373,7 +378,7 @@ try:
                         update=st.button("Update")
                         if update:
                             if runid and c_on_error and ignore_scrpt:
-                                if runid not in run_lst:
+                                if runid not in run_lst or runid==df_sel_rows["SEQ_ID"].iloc[0]:
                                     if job_sel=='File':
                                         if uploaded_file is not None:
                                             save_uploadedfile(uploaded_file)
@@ -382,7 +387,7 @@ try:
                                             # val=jobid+",'"+jobname+"',"+runid+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
                                             set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='@"+stage+"/"+uploaded_file.name+".gz',"+"CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
                                             
-                                            UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg2=set_val,arg3=update_filter)
+                                            UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg1=common_db,arg2=set_val,arg3=update_filter)
                                             df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
                                             st.success("Updated Successfully")
                                         else:
@@ -392,7 +397,7 @@ try:
                                         # val=jobid+",'"+jobname+"',"+runid+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
                                         set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='"+sql_input+"',CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
                                         
-                                        UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg2=set_val,arg3=update_filter)
+                                        UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg1=common_db,arg2=set_val,arg3=update_filter)
                                         df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
                                         st.success("Updated Successfully")
                                         # SCRIPT_NAME=sql.SCRIPT_NAME
@@ -424,7 +429,7 @@ try:
                                 update_filter="SCRIPT_NAME='"+df_sel_rows["SCRIPT_NAME"].iloc[i]+"' AND SEQ_ID="+str(df_sel_rows["SEQ_ID"].iloc[i]) 
                                 #or st.session_state.delete_btn:
                                 # st.session_state.delete_btn=True
-                                DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg2=update_filter)
+                                DELETE_JOB_SCRIPT=sql.DELETE_JOB_SCRIPT.format(arg1=common_db,arg2=update_filter)
                                 df_insert=fn.get_query_data(DELETE_JOB_SCRIPT,st.session_state.usrname) 
                             st.success("Deleted Successfully")
                             st.experimental_rerun()
@@ -459,7 +464,7 @@ try:
                         runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
                         
                         #STORED_PROC_RUN_ID_TASK=sql.STORED_PROC_RUN_ID_TASK.format(arg2=script_selected,arg3=runid_sel)
-                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_TASK.format(arg2=script_selected,arg3=runid_sel)
+                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_TASK.format(arg1=common_db,arg2=script_selected,arg3=runid_sel)
                         
                         
                     else:
@@ -524,6 +529,15 @@ try:
 
                 else:
                     st.error("Task already exists")
+            with tab4:
+                src_env=st.selectbox("Choose source env",["SAND BOX","DEV","UAT"])
+                target_env=st.selectbox("Choose target env",["DEV","UAT","PROD"])
+                script_promo=st.selectbox("Choose scripts to be promoted",df_scripts["SCRIPT_NAME"].unique())
+                
+                promote=st.button("Promote script")
+                if promote:
+                    PROMO_INSERT=sql.PROMO_INSERT.format(arg1=common_db,arg2=target_env,arg3=script_promo)
+                    df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
         else:
             st.warning("Please login to access this page")               
     else:

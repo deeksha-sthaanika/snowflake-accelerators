@@ -179,10 +179,14 @@ try:
 
             tab1,tab3,tab2 = st.tabs(["RUN JOB","AUDIT JOB LOGS","STAGE JOB FILES"])
             with tab1:
-                SCRIPT_NAME=sql.SCRIPT_NAME
+                
+                c1,c2,c3,c4=st.columns([2,2,1,1])
+                with c1:
+                    env=st.selectbox("Select Env",["SNDBX","DEV","UAT","PROD"]) 
+
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+env)
                 script_name=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
-                c1,c2,c3,c4=st.columns([2,2,1,1])
                 with c2:
                     script_selected = st.selectbox('Select Script Name',script_name['SCRIPT_NAME'].unique(),key='s3')
                     script_sel='\''+ '\',\''.join(map(str, script_selected)) +'\''
@@ -234,7 +238,7 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     if runid_all:
-                        STORED_PROC=sql.STORED_PROC.format(arg2=script_selected,arg3=batch_id)
+                        STORED_PROC=sql.STORED_PROC.format(arg1='_'+env,arg2=script_selected,arg3=batch_id,arg4=env,arg5='RAW_SCH')
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC,st.session_state.usrname)
                             st.write("Executed "+script_selected)
@@ -242,7 +246,7 @@ try:
                     else:
                         runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
                     
-                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg2=script_selected,arg3=runid_sel,arg4=batch_id)
+                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg1='_'+env,arg2=script_selected,arg3=runid_sel,arg4=batch_id)
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC_RUN_ID_ARR,st.session_state.usrname)
                             #st.write(df)
@@ -253,7 +257,7 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     for i in runid_sel:
-                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg2=script_selected,arg3=i,arg4=batch_id)
+                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg1='_'+env,arg2=script_selected,arg3=i,arg4=batch_id)
                         fn.proc_call(STORED_PROC_RUN_ID,st.session_state.usrname)
                         #st.write(df)
                     # st.write("Executed "+script_selected+" with run id "+str(i))
