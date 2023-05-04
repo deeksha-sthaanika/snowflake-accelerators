@@ -186,7 +186,7 @@ try:
             df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
             
             # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
-            common_db='_SNDBX'
+            common_db='_'+sql.DB_DICT["SAND BOX"]
             
             SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=common_db)
             df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
@@ -228,6 +228,7 @@ try:
                     else:
                         job_sel=st.radio("Choose one",("File","SQL Command"),horizontal=True)
                         st.info("Please note to use semicolon(;) as delimiter to segregate multiple queries")
+                        st.info("Include schema name for all object references!")
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
@@ -355,6 +356,7 @@ try:
                         # else:
                         job_sel=st.radio("Choose one ",("File","SQL Command"),horizontal=True)
                         st.info("Please note to use semicolon(;) as delimiter to segregate multiple queries")
+                        st.info("Include schema name for all object references!")
                         if job_sel=='File':
 
                             STAGE=sql.STAGE
@@ -536,8 +538,12 @@ try:
                 
                 promote=st.button("Promote script")
                 if promote:
-                    PROMO_INSERT=sql.PROMO_INSERT.format(arg1=common_db,arg2=target_env,arg3=script_promo)
-                    df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
+                    try:
+                        PROMO_INSERT=sql.PROMO_INSERT.format(arg1='_'+sql.DB_DICT[src_env],arg2='_'+sql.DB_DICT[target_env],arg3=script_promo)
+                        df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
+                        st.success("Promoted Successfully")
+                    except Exception as e:
+                        st.error(e)
         else:
             st.warning("Please login to access this page")               
     else:

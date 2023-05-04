@@ -182,9 +182,11 @@ try:
                 
                 c1,c2,c3,c4=st.columns([2,2,1,1])
                 with c1:
-                    env=st.selectbox("Select Env",["SNDBX","DEV","UAT","PROD"]) 
+                    env=st.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"]) 
+                    db=sql.DB_DICT[env]
+                    client_db=sql.CLIENT_DB_DICT[env]
 
-                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+env)
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+db)
                 script_name=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
                 with c2:
@@ -238,15 +240,14 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     if runid_all:
-                        STORED_PROC=sql.STORED_PROC.format(arg1='_'+env,arg2=script_selected,arg3=batch_id,arg4=env,arg5='RAW_SCH')
+                        STORED_PROC=sql.STORED_PROC.format(arg1='_'+db,arg2=script_selected,arg3=batch_id,arg4=client_db)
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC,st.session_state.usrname)
                             st.write("Executed "+script_selected)
                             st.info(df["SP_JOB_SCRIPT"][0])             
                     else:
-                        runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
-                    
-                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg1='_'+env,arg2=script_selected,arg3=runid_sel,arg4=batch_id)
+                        runid_sel='[\''+ '\',\''.join(map(str, runid_sel)) +'\']'
+                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg1='_'+db,arg2=script_selected,arg3=runid_sel,arg4=batch_id,arg5=client_db)
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC_RUN_ID_ARR,st.session_state.usrname)
                             #st.write(df)
@@ -257,7 +258,7 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     for i in runid_sel:
-                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg1='_'+env,arg2=script_selected,arg3=i,arg4=batch_id)
+                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg1='_'+db,arg2=script_selected,arg3=i,arg4=batch_id,arg5=client_db)
                         fn.proc_call(STORED_PROC_RUN_ID,st.session_state.usrname)
                         #st.write(df)
                     # st.write("Executed "+script_selected+" with run id "+str(i))
@@ -348,10 +349,15 @@ try:
 
 
             with tab3:
-                c1,c2,c3=st.columns([2,3,2])
+                # c1,c2,c3=st.columns([2,3,2])
+                c1,c2,c3,c4=st.columns([2,2,1,1])
+                with c1:
+                    env=st.selectbox("Select Env ",["SAND BOX","DEV","UAT","PROD"]) 
+                    db_audit=sql.DB_DICT[env]
+
                 aud_script_sel = c2.selectbox('Select Script Name',script_name['SCRIPT_NAME'].unique(),key='s4')
                 aud_script_sel='\''+ aud_script_sel +'\''
-                AUDIT_LOGS=sql.AUDIT_LOGS.format(arg2=aud_script_sel)
+                AUDIT_LOGS=sql.AUDIT_LOGS.format(arg2=aud_script_sel,arg1='_'+db_audit)
                 df_audit_logs=fn.get_query_data(AUDIT_LOGS,st.session_state.usrname)
                 log_inf=c2.empty()
                 log_inf.info("Select checkbox to download")
