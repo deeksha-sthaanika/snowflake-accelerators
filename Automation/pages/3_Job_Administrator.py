@@ -533,17 +533,31 @@ try:
                     st.error("Task already exists")
             with tab4:
                 src_env=st.selectbox("Choose source env",["SAND BOX","DEV","UAT"])
-                target_env=st.selectbox("Choose target env",["DEV","UAT","PROD"])
+                target_dict = {"SAND BOX":1,"DEV":2,"UAT":3,"PROD":4}
+                res=[key for key, value in target_dict.items() if value > target_dict[src_env]]
+                target_env=st.selectbox("Choose target env",list(res))
+                src='_'+sql.DB_DICT[src_env]
+                tgt='_'+sql.DB_DICT[target_env]
+
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=src)
+                df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
                 script_promo=st.selectbox("Choose scripts to be promoted",df_scripts["SCRIPT_NAME"].unique())
                 
                 promote=st.button("Promote script")
                 if promote:
-                    try:
-                        PROMO_INSERT=sql.PROMO_INSERT.format(arg1='_'+sql.DB_DICT[src_env],arg2='_'+sql.DB_DICT[target_env],arg3=script_promo)
-                        df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
-                        st.success("Promoted Successfully")
-                    except Exception as e:
-                        st.error(e)
+                    PROMO_VALIDATE=sql.PROMO_VALIDATE.format(arg1=src,arg2=script_promo)
+                    df_promo_validate=fn.get_query_data(PROMO_VALIDATE,st.session_state.usrname)
+
+                    if len(df_promo_validate)>0:
+                        st.warning("Please execute "+script_promo+" script for the following seq id "+str(df_promo_validate.values.ravel())+" in source environment")
+                    else:
+                        try:
+                            st.success("Good to promote the script")
+                            PROMO_INSERT=sql.PROMO_INSERT.format(arg1=src,arg2=tgt,arg3=script_promo)
+                            df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
+                            st.success("Promoted successfully")
+                        except Exception as e:
+                            st.error(e)
         else:
             st.warning("Please login to access this page")               
     else:
