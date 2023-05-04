@@ -549,8 +549,15 @@ try:
                 
                 promote=st.button("Promote script")
                 if promote:
-                    PROMO_INSERT=sql.PROMO_INSERT.format(arg1=common_db,arg2=target_env,arg3=script_promo)
-                    df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
+                    PROMO_VALIDATE=sql.PROMO_VALIDATE.format(arg1=arg1,arg2=script_promo)
+                    df_promo_validate=fn.get_query_data(PROMO_VALIDATE,st.session_state.usrname)
+
+                    if len(df_promo_validate)>0:
+                        st.warning("Please execute "+script_promo+" script for the following seq id "+str(df_promo_validate.values.ravel()))
+                    else:
+                        st.success("Good to promote the script")
+                        PROMO_INSERT=sql.PROMO_INSERT.format(arg1=common_db,arg2=target_env,arg3=script_promo)
+                        df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
         else:
             st.warning("Please login to access this page")               
     else:
