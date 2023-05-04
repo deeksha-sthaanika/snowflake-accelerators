@@ -531,7 +531,20 @@ try:
                     st.error("Task already exists")
             with tab4:
                 src_env=st.selectbox("Choose source env",["SAND BOX","DEV","UAT"])
-                target_env=st.selectbox("Choose target env",["DEV","UAT","PROD"])
+                target_dict = {
+                            "SAND BOX":1,
+                            "DEV":2,
+                            "UAT":3,
+                            "PROD":4
+                            }
+                res=[key for key, value in target_dict.items() if value > target_dict[src_env]]
+                target_env=st.selectbox("Choose target env",list(res))
+                if src_env!="SAND BOX":
+                    arg1='_'+src_env
+                else:
+                    arg1=common_db
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=arg1)
+                df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
                 script_promo=st.selectbox("Choose scripts to be promoted",df_scripts["SCRIPT_NAME"].unique())
                 
                 promote=st.button("Promote script")
