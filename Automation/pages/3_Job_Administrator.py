@@ -187,6 +187,8 @@ try:
             
             # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
             common_db='_'+sql.DB_DICT["SAND BOX"]
+            client_db=sql.CLIENT_DB_DICT["SAND BOX"]
+            client_sch='DEMO_WORK_INTERIM'
             
             SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=common_db)
             df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
@@ -268,7 +270,7 @@ try:
                                     put_file_in_stage(uploaded_file.name,stage)
                                     # if len(run_lst)==0:
                                     colname="SCRIPT_NAME,SEQ_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
-                                    val="'"+jobname+"',"+str(runid)+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
+                                    val="'"+jobname+"',"+str(runid)+",'@"+client_db+'.'+client_sch+'.'+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
                                     # else:
                                     #     jobid=df_runid["JOB_ID"].iloc[0]
                                     #     colname="JOB_ID,SCRIPT_NAME,RUN_ID,SQL_COMMAND,CONTINUE_ON_ERROR,IGNORE_SCRIPT"
@@ -372,7 +374,7 @@ try:
                                 sql_input = st.text_area("SQL Command",df_sel_rows["SQL_COMMAND"].iloc[0])   
                             else:
                                 sql_input = st.text_area("SQL Command",st.session_state.q_sql1)
-
+                            sql_input1=sql_input.replace("'","''")
                         c_on_error= st.selectbox("Continue on error?",["False","True"],key='q_err1')
                         
                         ignore_scrpt=st.selectbox("Ignore script?",["N","Y"],key='q_igsc1')
@@ -381,13 +383,19 @@ try:
                         if update:
                             if runid and c_on_error and ignore_scrpt:
                                 if runid not in run_lst or runid==df_sel_rows["SEQ_ID"].iloc[0]:
+                                    CURRENT_USER=sql.CURRENT_USER
+                                    df_user=fn.get_query_data(CURRENT_USER,st.session_state.usrname)
+
+                                    CURRENT_TIMESTAMP=sql.CURRENT_TIMESTAMP
+                                    df_time=fn.get_query_data(CURRENT_TIMESTAMP,st.session_state.usrname)
+                                    
                                     if job_sel=='File':
                                         if uploaded_file is not None:
                                             save_uploadedfile(uploaded_file)
                                             put_file_in_stage(uploaded_file.name,stage)
 
                                             # val=jobid+",'"+jobname+"',"+runid+",'@"+stage+"/"+uploaded_file.name+".gz','"+c_on_error+"','"+ignore_scrpt+"'"
-                                            set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='@"+stage+"/"+uploaded_file.name+".gz',"+"CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
+                                            set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='@"+client_db+"."+client_sch+"."+stage+"/"+uploaded_file.name+".gz',"+"CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"+",LAST_UPDATED_USER='"+df_user.iloc[0][0]+"',LAST_UPDATED_TIMESTAMP='"+str(df_time.iloc[0][0])+"'"
                                             
                                             UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg1=common_db,arg2=set_val,arg3=update_filter)
                                             df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
@@ -397,7 +405,7 @@ try:
                                     
                                     else:
                                         # val=jobid+",'"+jobname+"',"+runid+",'"+sql_input+"','"+c_on_error+"','"+ignore_scrpt+"'"
-                                        set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='"+sql_input+"',CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"
+                                        set_val="SEQ_ID="+str(runid)+",SQL_COMMAND='"+sql_input1+"',CONTINUE_ON_ERROR='"+c_on_error+"',IGNORE_SCRIPT='"+ignore_scrpt+"'"+",LAST_UPDATED_USER='"+df_user.iloc[0][0]+"',LAST_UPDATED_TIMESTAMP='"+str(df_time.iloc[0][0])+"'"
                                         
                                         UPDATE_JOB_SCRIPT=sql.UPDATE_JOB_SCRIPT.format(arg1=common_db,arg2=set_val,arg3=update_filter)
                                         df_insert=fn.get_query_data(UPDATE_JOB_SCRIPT,st.session_state.usrname) 
