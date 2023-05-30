@@ -191,14 +191,17 @@ try:
                 TASK=sql.TASK
                 df_task=fn.get_query_data(TASK,st.session_state.usrname)
                 df_task.columns = df_task.columns.str.upper()
-        
                 # df_task['CREATED_ON'] = df_task['CREATED_ON'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
                 # df_task.to_csv(task_list_file, index=False)
                 final_df_task_list = df_task#pd.read_csv(task_list_file)
+                final_df_task_list["FULL_NAME"]=final_df_task_list["DATABASE_NAME"]+'.'+final_df_task_list["SCHEMA_NAME"]+'.'+final_df_task_list["NAME"]
+                final_df_task_list["WITH_SCH_NAME"]=final_df_task_list["SCHEMA_NAME"]+'.'+final_df_task_list["NAME"]
+
+                df_task_parent=final_df_task_list[final_df_task_list["PREDECESSORS"]=='[]']
                 loadtime_list = current_dt()
                 print('Task List Data is loaded from Snowflake at: ', loadtime_list)
-                return final_df_task_list, loadtime_list
+                return final_df_task_list,df_task_parent, loadtime_list
 
             # In the below query, we are usign the TASK_HISTORY() function.
             # This function returns task activity within the last 7 days
@@ -227,12 +230,10 @@ try:
 
 
             with st.spinner("Please wait while we load the Data from Snowflake..."):
-                task_list, load_dt_list = load_data_task_list()
+                task_list,df_task_parent,load_dt_list = load_data_task_list()
                 task_hist,df_long_task, load_dt_hist = load_data_task_hist()
-                PARENT_TASK=sql.PARENT_TASK
-                df_task_parent=fn.get_query_data(PARENT_TASK,st.session_state.usrname)
-                df_task_parent.columns = df_task_parent.columns.str.upper()
-        
+
+      
 
                 # st.success('Snowflake Data Successful loaded!', icon="✅")
 
@@ -386,7 +387,7 @@ try:
                 for col, field_name in zip(colms, ['NAME', 'DATABASE_NAME', 'SCHEMA_NAME', 'STATE', 'SCHEDULED_TIME']):
                     col.markdown("<h5 style='color: #038ed3;'>"+field_name,unsafe_allow_html=True)
 
-                for idx, task_name in enumerate(task_list['NAME']):
+                for idx, task_name in enumerate(task_list['FULL_NAME']):
                     col1, col2, col3, col4, col5, col6 = st.columns((6))
                     col1.write(task_list['NAME'][idx])
                     col2.write(task_list['DATABASE_NAME'][idx])
@@ -402,7 +403,6 @@ try:
                         placeholder.button("less", key=str(idx) + "_")
                         res = task_hist.loc[task_hist['NAME'] == task_name]
                         AgGrid(res)
-
             # TAB4
             with tab4:
                 st.markdown(
@@ -416,25 +416,27 @@ try:
 
 
                 def run_task_list(data):
+                    env=st.selectbox("Choose Env:",["SAND BOX","DEV","UAT","PROD"])
+                    database_name=sql.CLIENT_DB_DICT[env]
+
+                    data=data[data["DATABASE_NAME"]==database_name]
+
                     st.markdown(f"<div id='linkto_{'Search'}'></div>", unsafe_allow_html=True)
-                    execute_task_select = st.selectbox(
-                        'Task Name',
-                        data['NAME'].unique())
+                    execute_task_select = st.selectbox('Task Name',data['WITH_SCH_NAME'].unique())
 
                     st.error("Do you want to run this task?")
 
 
 
-                    database_name = data[data['NAME'] == execute_task_select]['DATABASE_NAME'].unique()
-                    schema_name = data[data['NAME'] == execute_task_select]['SCHEMA_NAME'].unique()
+                    # database_name = data[data['NAME'] == execute_task_select]['DATABASE_NAME'].unique()
+                    # schema_name = data[data['NAME'] == execute_task_select]['SCHEMA_NAME'].unique()
 
-                    task_to_be_executed = database_name + "." + schema_name + "." + execute_task_select
+                    task_to_be_executed = database_name + "." + execute_task_select
 
 
                     if st.button("Execute Task"):
-                        st.write("we are here")
-                        print("EXECUTE TASK " + task_to_be_executed[0])
-                        EXECUTE_TASK=sql.EXECUTE_TASK.format(arg2=task_to_be_executed[0])
+                        print("EXECUTE TASK " + task_to_be_executed)
+                        EXECUTE_TASK=sql.EXECUTE_TASK.format(arg2=task_to_be_executed)
                         df_exec=fn.get_query_data(EXECUTE_TASK,st.session_state.usrname)
                         # conn.execute_string("EXECUTE TASK " + task_to_be_executed[0])
                         st.write('Task Executed Successfully. Please check your Snowflake instance for more details.')
@@ -446,32 +448,32 @@ try:
 
 
                     return task_to_be_executed
-
+                # df_task_parent
                 task_to_be_execute = run_task_list(df_task_parent)#task_hist
             with tab5:
-                # TASK=sql.TASK
-                # df_task=fn.get_query_data(TASK)
-                # df_task.columns = df_task.columns.str.upper()
-                # st.write(df_task)
-                # lst=list(df_task["NAME"])
-                # st.write(lst)
-                st.markdown(
-                    "<h2 style='text-align: center; color: black;'>Task Hierarchy", unsafe_allow_html=True)
+
+                st.markdown("<h2 style='text-align: center; color: black;'>Task Hierarchy", unsafe_allow_html=True)
                 # st.subheader("Task Hierarchy")
                 df_task=task_list
-                task=st.selectbox("Choose a task",df_task["NAME"])#,lst.index('PARENT_TASK')
-                st.write("")
-                st.write("")
-                if task not in list(df_task_parent["NAME"]):
-                    st.info("You selected a child task. The graph below shows only immediate parent of the selected task along with all its children if exists")
-                task_sel=df_task[df_task["NAME"]==task].DATABASE_NAME+'.'+df_task[df_task["NAME"]==task].SCHEMA_NAME+'.'+task
+                env=st.selectbox("Choose env",["SAND BOX","DEV","UAT","PROD"])
+                database_name=sql.CLIENT_DB_DICT[env]
 
+                df_task=df_task[df_task["DATABASE_NAME"]==database_name]
+                task=st.selectbox("Choose a task",df_task["WITH_SCH_NAME"])#,lst.index('PARENT_TASK')
+                st.write("")
+                st.write("")
+                if task not in list(df_task_parent["WITH_SCH_NAME"]):
+                    st.info("You selected a child task. The graph below shows only immediate parent of the selected task along with all its children if exists")
+                task_sel=df_task[df_task["WITH_SCH_NAME"]==task].DATABASE_NAME+'.'+task
+
+                common_db='_SNDBX'
                 def rolechart():
                     
                     # sqlstr='\select * \from table(information_schema.task_dependents(task_name => \'SNDBX_DEMO_DB.DEMO_WORK_INTERIM.PARENT_TASK\', recursive => false))\'
                     # fn.sql_to_dataframe("Use warehouse Compute_wh",st.session_state.usrname)
-                    DAG=sql.DAG.format(arg2=task_sel.iloc[0])
+                    DAG=sql.DAG.format(arg2=task_sel.iloc[0],arg3=common_db)
                     rdf=fn.get_query_data(DAG,st.session_state.usrname)
+                    
                     # rdf=fn.sql_to_dataframe("SELECT PARENT,substr(F.VALUE::VARCHAR,(regexp_instr(F.VALUE::VARCHAR,'\\\.',1,2)+1)) CHILD FROM (select NAME PARENT,PREDECESSORS CHILD from table(SNDBX_DEMO_DB.information_schema.task_dependents(task_name => '"+task_sel.iloc[0]+"', recursive => TRUE)) )MAIN,TABLE(FLATTEN(MAIN.CHILD))F")
                     dot=graphviz.Digraph()
                     dot.attr("node", shape="box",fillcolor="aliceblue",style="filled")

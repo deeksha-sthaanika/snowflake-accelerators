@@ -267,19 +267,26 @@ try:
                 try:
                     c1,c2,c3=st.columns([2,2,2])
 
-                    STAGE_NAME=sql.STAGE_NAME
-                    df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
-                    # st.write(df_stage_name)
-                    df_stage_name=df_stage_name[(df_stage_name["type"]=='INTERNAL')&(df_stage_name["owner"]!='APPADMIN')]
-                    # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
+                    # STAGE_NAME=sql.STAGE_NAME
+                    # df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
+                    # # st.write(df_stage_name)
+                    # df_stage_name=df_stage_name[(df_stage_name["type"]=='INTERNAL')&(df_stage_name["owner"]!='APPADMIN')]
+                    # # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
-                    sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
+                    # sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
 
-                    df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
-                    sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
+                    # df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
+                    # sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
                     
-                    df_schema=df_database[df_database["schema_name"]==sel_schema]
-                    selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
+                    # df_schema=df_database[df_database["schema_name"]==sel_schema]
+                    # selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
+                    # db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
+
+                    env=c2.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"],key='s8')
+                    stage_env=sql.DB_DICT[env]
+                    sel_db=sql.DB_NAME
+                    sel_schema=sql.SCHEMA_NAME
+                    selc_stage='INT_STAGE_'+stage_env
                     db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
 
                     STAGE_FILES=sql.STAGE_FILES.format(arg2=db_schema_stage)
@@ -310,6 +317,7 @@ try:
                             dl_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
 
                             ip=dl_stage_files["file"].iloc[0]
+                            
                             if str(ip).endswith(".gz"):
                                 op = open(dl_stage_files["file"].iloc[0].split('.gz')[0],"w")
                                 try:
@@ -319,6 +327,10 @@ try:
                                     # os.remove(dl_stage_files["file"].iloc[0])
 
                                     with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
+                                        with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "r") as f:
+                                            with st.expander("🔎 Zoom into stage files in detail"):
+                                                content=f.read()
+                                                st.code(content,'sql')
                                         st.download_button(
                                                 label="Download File",
                                                 data=file,
@@ -335,6 +347,10 @@ try:
 
                             else:
                                 with open(dl_stage_files["file"].iloc[0], "rb") as file:
+                                    with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "r") as f:
+                                            with st.expander("🔎 Zoom into stage files in detail"):
+                                                content=f.read()
+                                                st.code(content,'sql')
                                     st.download_button(
                                             label="Download File",
                                             data=file,

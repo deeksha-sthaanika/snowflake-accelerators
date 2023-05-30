@@ -185,6 +185,12 @@ try:
 
             table_name=db+"."+sch+"."+table_sel
 
+            USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=db)
+            df_cols=fn.get_query_data(USE_DATABASE_PROF,st.session_state.usrname)
+
+            USE_SCHEMA_PROF=sql.USE_SCHEMA_NAME_PROF.format(arg2=sch)
+            df_cols=fn.get_query_data(USE_SCHEMA_PROF,st.session_state.usrname)
+
             COLUMNS=sql.COLUMNS.format(arg2=db,arg3=sch,arg4=table_sel)
             df_cols=fn.get_query_data(COLUMNS,st.session_state.usrname)
 

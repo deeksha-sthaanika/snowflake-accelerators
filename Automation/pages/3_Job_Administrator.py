@@ -187,15 +187,15 @@ try:
             
             # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
             common_db='_'+sql.DB_DICT["SAND BOX"]
-            client_db=sql.CLIENT_DB_DICT["SAND BOX"]
-            client_sch='DEMO_WORK_INTERIM'
+            client_db=sql.DB_NAME
+            client_sch=sql.SCHEMA_NAME
             
             SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=common_db)
             df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
             df_scripts["CONTINUE_ON_ERROR"]=df_scripts["CONTINUE_ON_ERROR"].astype(str)
 
-            tab1,tab2,tab3,tab4=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks","Promote Jobs"])
+            tab1,tab2,tab3,tab5,tab4=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks","Resume/Suspend Tasks","Promote Jobs"])
             with tab1:
                 
                 st.subheader("Create Jobs")
@@ -235,7 +235,8 @@ try:
 
                             STAGE=sql.STAGE
                             df_stage=fn.get_query_data(STAGE,st.session_state.usrname)
-                            stage=st.selectbox("Staging Area ",df_stage["name"])
+                            # stage=st.selectbox("Staging Area ",df_stage["name"])
+                            stage=st.selectbox("Staging Area:",["INT_STAGE_SNDBX"],disabled=True)
                             # state=get_session_state()
                             # if not state.file_key:
                             #     state.file_key = str(randint(1000, 100000000))
@@ -363,7 +364,8 @@ try:
 
                             STAGE=sql.STAGE
                             df_stage=fn.get_query_data(STAGE,st.session_state.usrname)
-                            stage=st.selectbox("Staging Area:",df_stage["name"])
+                            # stage=st.selectbox("Staging Area:",df_stage["name"])
+                            stage=st.selectbox("Staging Area ",["INT_STAGE_SNDBX"],disabled=True)
 
                             if 'file1' not in st.session_state:
                                 uploaded_file = st.file_uploader("Choose file:")   
@@ -451,7 +453,15 @@ try:
                 df_task=fn.get_query_data(TASK,st.session_state.usrname)
                 df_task.columns = df_task.columns.str.upper()
 
+                SCHEMA=sql.SCHEMA
+                df_task_schema=fn.get_query_data(SCHEMA,st.session_state.usrname)
+
+
                 # st.write(df_task)
+                df_task_schema=df_task_schema.loc[df_task_schema['owner'].notnull()]
+                task_schema=st.selectbox("Choose schema",df_task_schema["name"])
+            
+                
                 if 'task_name' not in st.session_state:
                     task_name=st.text_input("Task Name",key='task_name')
                 else:
@@ -474,7 +484,7 @@ try:
                         runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
                         
                         #STORED_PROC_RUN_ID_TASK=sql.STORED_PROC_RUN_ID_TASK.format(arg2=script_selected,arg3=runid_sel)
-                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_TASK.format(arg1=common_db,arg2=script_selected,arg3=runid_sel)
+                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_TASK.format(arg1=common_db,arg2=script_selected,arg3=runid_sel,arg4=client_db)
                         
                         
                     else:
@@ -485,7 +495,7 @@ try:
                             sql_input_task = st.text_area("SQL Command",st.session_state.t_sql,key='t_sql')
                         STORED_PROC_RUN_ID_ARR=sql_input_task
                     
-                    val=task_name+" WAREHOUSE='"+wh+"'"
+                    val=sql.DB_NAME+"."+task_schema+"."+task_name+" WAREHOUSE='"+wh+"'"
                     parent=st.checkbox("Is this Root Task?")
                     if parent:
                         schedule_type=st.radio("Choose schedule type",["Cron","Minute"],horizontal=True)
@@ -522,14 +532,14 @@ try:
                                     CREATE_PARENT_TASK=sql.CREATE_PARENT_TASK.format(arg2=val,arg3=sch,arg4=STORED_PROC_RUN_ID_ARR)
                                     df_create_task=fn.get_query_data(CREATE_PARENT_TASK,st.session_state.usrname)
 
-                                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
-                                    df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
+                                    # RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                                    # df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
                                 else:
                                     CREATE_CHILD_TASK=sql.CREATE_CHILD_TASK.format(arg2=val,arg3=child_task,arg4=STORED_PROC_RUN_ID_ARR)
                                     df_create_task=fn.get_query_data(CREATE_CHILD_TASK,st.session_state.usrname)
 
-                                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
-                                    df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
+                                    # RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                                    # df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
                                 st.success(task_name+" created successfully")
                             except Exception as e:  
                                 st.error(e)
@@ -547,25 +557,125 @@ try:
                 src='_'+sql.DB_DICT[src_env]
                 tgt='_'+sql.DB_DICT[target_env]
 
+                env_replace={'JOB_SCRIPTS'+src:'JOB_SCRIPTS'+tgt,'JOB_SCRIPTS_AUDIT_TABLE'+src:'JOB_SCRIPTS_AUDIT_TABLE'+tgt}
+
+                # st.write(env_replace.keys('JOB_SCRIPTS'+src))
                 SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1=src)
                 df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
-                script_promo=st.selectbox("Choose scripts to be promoted",df_scripts["SCRIPT_NAME"].unique())
-                
-                promote=st.button("Promote script")
-                if promote:
-                    PROMO_VALIDATE=sql.PROMO_VALIDATE.format(arg1=src,arg2=script_promo)
-                    df_promo_validate=fn.get_query_data(PROMO_VALIDATE,st.session_state.usrname)
 
-                    if len(df_promo_validate)>0:
-                        st.warning("Please execute "+script_promo+" script for the following seq id "+str(df_promo_validate.values.ravel())+" in source environment")
-                    else:
+                object=st.radio("Choose object",["Script","TASK"],horizontal=True)
+
+                if object=="Script":
+                    script_promo=st.selectbox("Choose script to be promoted",df_scripts["SCRIPT_NAME"].unique())
+                    
+                    promote=st.button("Promote script")
+                    if promote:
+                        PROMO_VALIDATE=sql.PROMO_VALIDATE.format(arg1=src,arg2=script_promo)
+                        df_promo_validate=fn.get_query_data(PROMO_VALIDATE,st.session_state.usrname)
+
+                        if len(df_promo_validate)>0:
+                            st.error("Please execute "+script_promo+" script for the following seq id "+str(df_promo_validate.values.ravel())+" in "+src_env+" environment")
+                        else:
+                            msg=st.empty()
+                            try:
+                                msg.success("Good to promote the script")
+                                PROMO_INSERT=sql.PROMO_INSERT.format(arg1=src,arg2=tgt,arg3=script_promo)
+                                df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
+
+                                GET_STAGE_FILE_NAME=sql.GET_STAGE_FILE_NAME.format(arg1=src,arg2=script_promo)
+                                df_get_stage_file_name=fn.get_query_data(GET_STAGE_FILE_NAME,st.session_state.usrname)
+                                
+                                if len(df_get_stage_file_name)>0:
+                                    msg.info("Uploading Files")
+                                    for i in df_get_stage_file_name["SQL_COMMAND"]:
+                                        try:
+                                            GET_STAGE_FILE=sql.GET_STAGE_FILE.format(arg2=i.split('@')[1])
+                                            df_get_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
+
+                                            PUT_FILE=sql.PUT_FILE.format(arg2=sql.PATH+'/'+df_get_stage_files["file"][0],arg3='INT_STAGE'+tgt)
+                                            df_put_stage_files=fn.get_query_data(PUT_FILE,st.session_state.usrname)
+                                            
+                                            msg.success("Promoted successfully") 
+                                        except Exception as e:
+                                            st.error(e)
+                                
+                            except Exception as e:
+                                st.error(e)
+                else:
+                    TASK_PROMO=sql.TASK
+                    df_task=fn.get_query_data(TASK_PROMO,st.session_state.usrname)
+                    df_task.columns = df_task.columns.str.upper()
+                    
+                    df_task=df_task[df_task["DATABASE_NAME"]==sql.CLIENT_DB_DICT[src_env]]
+                    df_task["FULL_NAME"]=df_task["SCHEMA_NAME"]+'.'+df_task["NAME"]
+                    task_promo=st.selectbox("Choose task to be promoted",df_task[df_task["PREDECESSORS"]=='[]'].FULL_NAME)
+                    
+                    GET_CHILD=sql.GET_CHILD.format(arg2=task_promo)
+                    df_get_child=fn.get_query_data(GET_CHILD,st.session_state.usrname)
+
+                    df_get_ddl_new=pd.DataFrame(columns=["DDL"])
+                    j=0
+                    for i in df_get_child["PARENT"]:
+                        
+                        GET_DDL=sql.GET_DDL.format(arg2=i)
+                        df_get_ddl=fn.get_query_data(GET_DDL,st.session_state.usrname)
+
+                        df_get_ddl_new=df_get_ddl_new.append({'DDL':df_get_ddl.iloc[0][0].replace('JOB_SCRIPTS'+src,env_replace['JOB_SCRIPTS'+src]).replace('JOB_SCRIPTS_AUDIT_TABLE'+src,env_replace['JOB_SCRIPTS_AUDIT_TABLE'+src]).replace("'"+sql.CLIENT_DB_DICT[src_env]+"'","'"+sql.CLIENT_DB_DICT[target_env]+"'")},ignore_index=True)                     # df_get_ddl_new["DDL"]=str(df_get_ddl.iloc[0][j].replace("SNDBX_DEMO_DB.DEMO_WORK_INTERIM","DEV.RAW_SCH")  )
+                        # st.write(df_get_ddl_new.iloc[j][0])
+
+                        if df_get_ddl_new.iloc[j][0].__contains__("after"):
+                            ddl_p1=df_get_ddl_new.iloc[j][0].split("after ")[0]
+                            ddl_p2=df_get_ddl_new.iloc[j][0].split("after ")[1].split("as")[0].replace(sql.CLIENT_DB_DICT[src_env],sql.CLIENT_DB_DICT[target_env])
+                            ddl_p3=df_get_ddl_new.iloc[j][0].split("as ")[1]
+
+                            replaced_ddl=ddl_p1+' after '+ddl_p2+' as '+ddl_p3
+                            # st.write(replaced_ddl)
+                            df_get_ddl_new.iloc[j][0]=replaced_ddl
+                        # df_get_ddl_new["DDL"]
+                        
+                        j=j+1
+                    st.table(df_get_ddl_new)
+                    promote=st.button("Promote task")
+                    if promote:
+                        # GET_DDL=sql.GET_DDL.format(arg2=task_promo)
+                        # df_get_ddl_parent=fn.get_query_data(GET_DDL,st.session_state.usrname)
                         try:
-                            st.success("Good to promote the script")
-                            PROMO_INSERT=sql.PROMO_INSERT.format(arg1=src,arg2=tgt,arg3=script_promo)
-                            df_promo_insert=fn.get_query_data(PROMO_INSERT,st.session_state.usrname)
-                            st.success("Promoted successfully")
+                            USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=sql.CLIENT_DB_DICT[target_env])
+                            df=fn.get_query_data(USE_DATABASE_PROF,st.session_state.usrname)
+                            # USE_SCHEMA_NAME_PROF=sql.USE_SCHEMA_NAME_PROF.format(arg2='RAW_SCH')
+                            # df=fn.get_query_data(USE_SCHEMA_NAME_PROF,st.session_state.usrname)
+
+                            for i in df_get_ddl_new["DDL"]:
+                                df_done=fn.get_query_data(i,st.session_state.usrname)
+                            
+                            st.success("Task promoted")
                         except Exception as e:
                             st.error(e)
+            with tab5:
+                env=st.selectbox("Choose env ",["SAND BOX","DEV","UAT"])
+
+                USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=sql.CLIENT_DB_DICT[env])
+                df=fn.get_query_data(USE_DATABASE_PROF,st.session_state.usrname)
+
+                PARENT_TASK=sql.PARENT_TASK
+                df_parent=fn.get_query_data(PARENT_TASK,st.session_state.usrname)
+                df_parent["WITH_SCHEMA_NAME"]=df_parent["schema_name"]+'.'+df_parent["name"]
+
+                task_name=st.selectbox("Choose Tasks",df_parent["WITH_SCHEMA_NAME"])
+                c1, c2, c3, c4 = st.columns([4,1,1,4])
+                res=c2.button("Resume")
+                sus=c3.button("Suspend")
+                if res:
+                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                    df_res=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
+                    st.success("Resumed "+task_name)
+                if sus:
+                    SUSPEND_TASK=sql.SUSPEND_TASK.format(arg2=task_name)
+                    df_res=fn.get_query_data(SUSPEND_TASK,st.session_state.usrname)
+                    st.success("Suspended "+task_name)
+
+
+                    
         else:
             st.warning("Please login to access this page")               
     else:
