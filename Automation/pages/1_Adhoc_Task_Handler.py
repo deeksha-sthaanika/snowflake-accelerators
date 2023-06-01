@@ -282,7 +282,7 @@ try:
                     # selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
                     # db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
 
-                    env=c2.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"],key='s8')
+                    env=c1.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"],key='s8')
                     stage_env=sql.DB_DICT[env]
                     sel_db=sql.DB_NAME
                     sel_schema=sql.SCHEMA_NAME

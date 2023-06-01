@@ -6,6 +6,8 @@ import os
 import time
 import functions as fn
 from random import randint
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from PIL import Image
 from st_aggrid import AgGrid,GridUpdateMode,DataReturnMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -141,6 +143,10 @@ try:
             st.session_state.password_ip=''
             st.session_state.account=''
         if st.session_state.success_param:
+            
+            def refresh_data():
+                st.experimental_rerun()
+
             def clear_form():
                 st.session_state["q_name"]=""
                 st.session_state["q_sql"]=""
@@ -185,7 +191,6 @@ try:
             USE_SCHEMA_NAME=sql.USE_SCHEMA_NAME
             df=fn.get_query_data(USE_SCHEMA_NAME,st.session_state.usrname)
             
-            # df_scripts=pd.DataFrame(columns=["JOB_ID","SCRIPT_NAME","RUN_ID","SQL_COMMAND","CONTINUE_ON_ERROR","IGNORE_SCRIPT"]) 
             common_db='_'+sql.DB_DICT["SAND BOX"]
             client_db=sql.DB_NAME
             client_sch=sql.SCHEMA_NAME
@@ -194,8 +199,14 @@ try:
             df_scripts=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
             df_scripts["CONTINUE_ON_ERROR"]=df_scripts["CONTINUE_ON_ERROR"].astype(str)
+            
+            # c1,c2=st.columns([8,1])
+            # c2.button("Refresh Data",on_click=refresh_data)
 
-            tab1,tab2,tab3,tab5,tab4=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks","Resume/Suspend Tasks","Promote Jobs"])
+            common_db_info=st.empty()
+            common_db_info.info("All objects are created under "+sql.CLIENT_DB_DICT["SAND BOX"]+" database by default")
+
+            tab1,tab2,tab3,tab5,tab4,tab6=st.tabs(["Configure New Jobs","Configure Existing Jobs","Configure New Tasks","Resume/Suspend Tasks","Promote Jobs","Promotion Monitor"])
             with tab1:
                 
                 st.subheader("Create Jobs")
@@ -452,6 +463,7 @@ try:
                 TASK=sql.TASK
                 df_task=fn.get_query_data(TASK,st.session_state.usrname)
                 df_task.columns = df_task.columns.str.upper()
+                df_task["WITH_SCHEMA_NAME"]=df_task["SCHEMA_NAME"]+'.'+df_task["NAME"]
 
                 SCHEMA=sql.SCHEMA
                 df_task_schema=fn.get_query_data(SCHEMA,st.session_state.usrname)
@@ -467,7 +479,7 @@ try:
                 else:
                     task_name=st.text_input("Task Name",st.session_state.task_name,key='task_name')
                 
-                if task_name not in list(df_task["NAME"]):
+                if task_schema+'.'+task_name not in list(df_task["WITH_SCHEMA_NAME"]):
                     script_selected=None
                     runid_sel=None
                     sql_input_task=None
@@ -501,8 +513,7 @@ try:
                         schedule_type=st.radio("Choose schedule type",["Cron","Minute"],horizontal=True)
                         if schedule_type=='Cron':
                             st.info("Sample cron strings :  * * * * * UTC   or   0 0 * * * America/Chicago")
-                            # c1,c2=st.columns([1,5])
-                            # c1.write("USING CRON ")
+
                             if 'cron' not in st.session_state:
                                 cron=st.text_input("Cron String",key='cron')
                             else:
@@ -517,7 +528,7 @@ try:
                             # c2.write(" MINUTE")
                             sch=str(minute)+" MINUTE"
                     else:
-                        child_task=st.multiselect("Choose dependent tasks",df_task["NAME"],df_task["NAME"].iloc[0])
+                        child_task=st.multiselect("Choose dependent tasks",df_task["WITH_SCHEMA_NAME"],df_task["WITH_SCHEMA_NAME"].iloc[0])
                         child_task= ','.join(map(str, child_task))             
                     
                     st.write("")
@@ -534,13 +545,15 @@ try:
 
                                     # RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
                                     # df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
+                                    st.success(task_name+" created successfully")
+                                    st.info("Please note to Resume the task in next tab!")
                                 else:
                                     CREATE_CHILD_TASK=sql.CREATE_CHILD_TASK.format(arg2=val,arg3=child_task,arg4=STORED_PROC_RUN_ID_ARR)
                                     df_create_task=fn.get_query_data(CREATE_CHILD_TASK,st.session_state.usrname)
 
                                     # RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
                                     # df_resume_task=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
-                                st.success(task_name+" created successfully")
+                                    st.success(task_name+" created successfully")
                             except Exception as e:  
                                 st.error(e)
                         else:
@@ -550,6 +563,7 @@ try:
                 else:
                     st.error("Task already exists")
             with tab4:
+                # common_db_info.write("")
                 src_env=st.selectbox("Choose source env",["SAND BOX","DEV","UAT"])
                 target_dict = {"SAND BOX":1,"DEV":2,"UAT":3,"PROD":4}
                 res=[key for key, value in target_dict.items() if value > target_dict[src_env]]
@@ -608,50 +622,55 @@ try:
                     
                     df_task=df_task[df_task["DATABASE_NAME"]==sql.CLIENT_DB_DICT[src_env]]
                     df_task["FULL_NAME"]=df_task["SCHEMA_NAME"]+'.'+df_task["NAME"]
-                    task_promo=st.selectbox("Choose task to be promoted",df_task[df_task["PREDECESSORS"]=='[]'].FULL_NAME)
-                    
-                    GET_CHILD=sql.GET_CHILD.format(arg2=task_promo)
-                    df_get_child=fn.get_query_data(GET_CHILD,st.session_state.usrname)
 
-                    df_get_ddl_new=pd.DataFrame(columns=["DDL"])
-                    j=0
-                    for i in df_get_child["PARENT"]:
+                    if len(df_task["FULL_NAME"])>0:
+                        task_promo=st.selectbox("Choose task to be promoted",df_task[df_task["PREDECESSORS"]=='[]'].FULL_NAME)
                         
-                        GET_DDL=sql.GET_DDL.format(arg2=i)
-                        df_get_ddl=fn.get_query_data(GET_DDL,st.session_state.usrname)
-
-                        df_get_ddl_new=df_get_ddl_new.append({'DDL':df_get_ddl.iloc[0][0].replace('JOB_SCRIPTS'+src,env_replace['JOB_SCRIPTS'+src]).replace('JOB_SCRIPTS_AUDIT_TABLE'+src,env_replace['JOB_SCRIPTS_AUDIT_TABLE'+src]).replace("'"+sql.CLIENT_DB_DICT[src_env]+"'","'"+sql.CLIENT_DB_DICT[target_env]+"'")},ignore_index=True)                     # df_get_ddl_new["DDL"]=str(df_get_ddl.iloc[0][j].replace("SNDBX_DEMO_DB.DEMO_WORK_INTERIM","DEV.RAW_SCH")  )
-                        # st.write(df_get_ddl_new.iloc[j][0])
-
-                        if df_get_ddl_new.iloc[j][0].__contains__("after"):
-                            ddl_p1=df_get_ddl_new.iloc[j][0].split("after ")[0]
-                            ddl_p2=df_get_ddl_new.iloc[j][0].split("after ")[1].split("as")[0].replace(sql.CLIENT_DB_DICT[src_env],sql.CLIENT_DB_DICT[target_env])
-                            ddl_p3=df_get_ddl_new.iloc[j][0].split("as ")[1]
-
-                            replaced_ddl=ddl_p1+' after '+ddl_p2+' as '+ddl_p3
-                            # st.write(replaced_ddl)
-                            df_get_ddl_new.iloc[j][0]=replaced_ddl
-                        # df_get_ddl_new["DDL"]
+                        GET_CHILD=sql.GET_CHILD.format(arg2=task_promo)
+                        df_get_child=fn.get_query_data(GET_CHILD,st.session_state.usrname)
                         
-                        j=j+1
-                    st.table(df_get_ddl_new)
-                    promote=st.button("Promote task")
-                    if promote:
-                        # GET_DDL=sql.GET_DDL.format(arg2=task_promo)
-                        # df_get_ddl_parent=fn.get_query_data(GET_DDL,st.session_state.usrname)
-                        try:
-                            USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=sql.CLIENT_DB_DICT[target_env])
-                            df=fn.get_query_data(USE_DATABASE_PROF,st.session_state.usrname)
-                            # USE_SCHEMA_NAME_PROF=sql.USE_SCHEMA_NAME_PROF.format(arg2='RAW_SCH')
-                            # df=fn.get_query_data(USE_SCHEMA_NAME_PROF,st.session_state.usrname)
-
-                            for i in df_get_ddl_new["DDL"]:
-                                df_done=fn.get_query_data(i,st.session_state.usrname)
+                        df_get_ddl_new=pd.DataFrame(columns=["DDL"])
+                        j=0
+                        for i in df_get_child["PARENT"]:
                             
-                            st.success("Task promoted")
-                        except Exception as e:
-                            st.error(e)
+                            GET_DDL=sql.GET_DDL.format(arg2=i)
+                            df_get_ddl=fn.get_query_data(GET_DDL,st.session_state.usrname)
+                            
+                            df_get_ddl_new=df_get_ddl_new.append({'DDL':df_get_ddl.iloc[0][0].replace('JOB_SCRIPTS'+src,env_replace['JOB_SCRIPTS'+src]).replace('JOB_SCRIPTS_AUDIT_TABLE'+src,env_replace['JOB_SCRIPTS_AUDIT_TABLE'+src]).replace("'"+sql.CLIENT_DB_DICT[src_env]+"'","'"+sql.CLIENT_DB_DICT[target_env]+"'")},ignore_index=True)                     # df_get_ddl_new["DDL"]=str(df_get_ddl.iloc[0][j].replace("SNDBX_DEMO_DB.DEMO_WORK_INTERIM","DEV.RAW_SCH")  )
+                            # st.write(df_get_ddl_new.iloc[j][0])
+
+                            if df_get_ddl_new.iloc[j][0].__contains__("after"):
+                                ddl_p1=df_get_ddl_new.iloc[j][0].split("after ")[0]
+                                ddl_p2=df_get_ddl_new.iloc[j][0].split("after ")[1].split("as")[0].replace(sql.CLIENT_DB_DICT[src_env],sql.CLIENT_DB_DICT[target_env])
+                                ddl_p3=df_get_ddl_new.iloc[j][0].split("as ")[1]
+
+                                replaced_ddl=ddl_p1+' after '+ddl_p2+' as '+ddl_p3
+                                # st.write(replaced_ddl)
+                                df_get_ddl_new.iloc[j][0]=replaced_ddl
+                            # df_get_ddl_new["DDL"]
+                            
+                            j=j+1
+                        st.table(df_get_ddl_new)
+                        promote=st.button("Promote task")
+                        if promote:
+                            # GET_DDL=sql.GET_DDL.format(arg2=task_promo)
+                            # df_get_ddl_parent=fn.get_query_data(GET_DDL,st.session_state.usrname)
+                            try:
+                                USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=sql.CLIENT_DB_DICT[target_env])
+                                df=fn.get_query_data(USE_DATABASE_PROF,st.session_state.usrname)
+                                USE_SCHEMA_NAME_PROF=sql.USE_SCHEMA_NAME_PROF.format(arg2=task_promo.split('.')[0])
+                                df=fn.get_query_data(USE_SCHEMA_NAME_PROF,st.session_state.usrname)
+
+                                for i in df_get_ddl_new["DDL"]:
+                                    df_done=fn.get_query_data(i,st.session_state.usrname)
+                                
+                                st.success("Task promoted")
+                            except Exception as e:
+                                st.error(e)
+                    else:
+                        st.warning("No tasks available in "+src_env+" to promote")
             with tab5:
+                # common_db_info.write("")
                 env=st.selectbox("Choose env ",["SAND BOX","DEV","UAT"])
 
                 USE_DATABASE_PROF=sql.USE_DATABASE_PROF.format(arg2=sql.CLIENT_DB_DICT[env])
@@ -662,9 +681,15 @@ try:
                 df_parent["WITH_SCHEMA_NAME"]=df_parent["schema_name"]+'.'+df_parent["name"]
 
                 task_name=st.selectbox("Choose Tasks",df_parent["WITH_SCHEMA_NAME"])
-                c1, c2, c3, c4 = st.columns([4,1,1,4])
-                res=c2.button("Resume")
-                sus=c3.button("Suspend")
+                c1, c2, c3 = st.columns([4,2,4])
+                btn=c2.empty()
+                res=False
+                sus=False
+                
+                if df_parent[df_parent["WITH_SCHEMA_NAME"]==task_name].state.iloc[0]=='suspended':
+                    res=btn.button("Resume")
+                else:
+                    sus=btn.button("Suspend")
                 if res:
                     RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
                     df_res=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
@@ -674,8 +699,54 @@ try:
                     df_res=fn.get_query_data(SUSPEND_TASK,st.session_state.usrname)
                     st.success("Suspended "+task_name)
 
+            with tab6:
 
-                    
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+sql.DB_DICT['DEV'])
+                df_scripts_dev=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
+
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+sql.DB_DICT['UAT'])
+                df_scripts_uat=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
+
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+sql.DB_DICT['PROD'])
+                df_scripts_prd=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
+
+                cols=st.columns(3)
+                for i,name in zip(cols,["DEV","UAT","PROD"]):
+                    i.markdown("<h4 style='color: #038ed3;' align='center'>"+name,unsafe_allow_html=True)
+                
+                fig_count = make_subplots(
+                rows=1, cols=3,
+                specs=[
+                    [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}]
+                ],horizontal_spacing=0, vertical_spacing=0)
+                
+                fig_count.add_trace(
+                go.Indicator(
+                    mode="number",
+                    value=len(df_scripts_dev["SCRIPT_NAME"].unique()),
+                    title="Total jobs promoted",
+                    number={'font_color': 'green'}),
+                row=1, col=1)
+
+                fig_count.add_trace(
+                go.Indicator(
+                    mode="number",
+                    value=len(df_scripts_uat["SCRIPT_NAME"].unique()),
+                    title="Total jobs promoted",
+                    number={'font_color': 'green'}),
+                row=1, col=2)  
+
+                fig_count.add_trace(
+                go.Indicator(
+                    mode="number",
+                    value=len(df_scripts_prd["SCRIPT_NAME"].unique()),
+                    title="Total jobs promoted",
+                    number={'font_color': 'green'}),
+                row=1, col=3)   
+
+                fig_count.update_layout(template="plotly_dark", font_family="Arial",
+                                    margin=dict(l=20, r=20, t=20, b=20), width=50, height=200)
+                st.plotly_chart(fig_count, use_container_width=True)
         else:
             st.warning("Please login to access this page")               
     else:
