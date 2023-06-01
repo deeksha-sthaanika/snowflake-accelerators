@@ -710,6 +710,15 @@ try:
                 SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+sql.DB_DICT['PROD'])
                 df_scripts_prd=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
+                dev_count=0
+                uat_count=0
+                prod_count=0
+
+                if len(df_scripts_dev)>0 and len(df_scripts_uat)>0 and len(df_scripts_prd)>0:
+                    dev_count=len(df_scripts_dev["SCRIPT_NAME"].unique())
+                    uat_count=len(df_scripts_uat["SCRIPT_NAME"].unique())
+                    prod_count=len(df_scripts_prd["SCRIPT_NAME"].unique())
+
                 cols=st.columns(3)
                 for i,name in zip(cols,["DEV","UAT","PROD"]):
                     i.markdown("<h4 style='color: #038ed3;' align='center'>"+name,unsafe_allow_html=True)
@@ -723,7 +732,7 @@ try:
                 fig_count.add_trace(
                 go.Indicator(
                     mode="number",
-                    value=len(df_scripts_dev["SCRIPT_NAME"].unique()),
+                    value=dev_count,
                     title="Total jobs promoted",
                     number={'font_color': 'green'}),
                 row=1, col=1)
@@ -731,7 +740,7 @@ try:
                 fig_count.add_trace(
                 go.Indicator(
                     mode="number",
-                    value=len(df_scripts_uat["SCRIPT_NAME"].unique()),
+                    value=uat_count,
                     title="Total jobs promoted",
                     number={'font_color': 'green'}),
                 row=1, col=2)  
@@ -739,7 +748,7 @@ try:
                 fig_count.add_trace(
                 go.Indicator(
                     mode="number",
-                    value=len(df_scripts_prd["SCRIPT_NAME"].unique()),
+                    value=prod_count,
                     title="Total jobs promoted",
                     number={'font_color': 'green'}),
                 row=1, col=3)   
