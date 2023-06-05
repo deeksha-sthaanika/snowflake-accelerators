@@ -721,8 +721,8 @@ try:
 
                 cols=st.columns(3)
                 for i,name in zip(cols,["DEV","UAT","PROD"]):
-                    i.markdown("<h4 style='color: #038ed3;' align='center'>"+name,unsafe_allow_html=True)
-                
+                    i.markdown("<h3 style='color: #038ed3;' align='center'>"+name,unsafe_allow_html=True)
+                    i.markdown("<h4 style='color: #908b8b';font_family='Arial'; align='center'>"+"Total jobs promoted",unsafe_allow_html=True)
                 fig_count = make_subplots(
                 rows=1, cols=3,
                 specs=[
@@ -733,7 +733,7 @@ try:
                 go.Indicator(
                     mode="number",
                     value=dev_count,
-                    title="Total jobs promoted",
+                    # title="Total jobs promoted",
                     number={'font_color': 'green'}),
                 row=1, col=1)
 
@@ -741,7 +741,7 @@ try:
                 go.Indicator(
                     mode="number",
                     value=uat_count,
-                    title="Total jobs promoted",
+                    # title="Total jobs promoted",
                     number={'font_color': 'green'}),
                 row=1, col=2)  
 
@@ -749,13 +749,48 @@ try:
                 go.Indicator(
                     mode="number",
                     value=prod_count,
-                    title="Total jobs promoted",
+                    # title="Total jobs promoted",
                     number={'font_color': 'green'}),
-                row=1, col=3)   
+                row=1, col=3)  
+                
+                fig_count1 = make_subplots(
+                rows=1, cols=3,
+                specs=[
+                    [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}]
+                ],horizontal_spacing=0, vertical_spacing=0)
+
+                labels=["Failed runs","Successful runs"]
+                
+                for i,j in zip(["DEV","UAT","PROD"],range(2)):
+                    AUDIT_LOGS=sql.AUDIT_LOGS.format(arg1='_'+sql.DB_DICT[i],arg2='SCRIPT_NAME')
+                    df_audit=fn.get_query_data(AUDIT_LOGS,st.session_state.usrname)
+                    if len(df_audit)>0:
+                        df_audit=df_audit.groupby("STATUS").count()
+                        fig_count1.add_trace(go.Pie(labels=labels, values=df_audit["SEQ_ID"], showlegend=True,marker_colors=['#f33e42','#00B32C']),row=1,col=j+1)
+                    
+                
+                # fig_count1.add_trace(go.Pie(hole=0.5,labels=labels, values=df_audit["SEQ_ID"], showlegend=True,marker_colors=['#f33e42','#00B32C']),row=1,col=3)
+                # fig_count.add_trace(go.Pie(labels=labels, values=[10,20], hole=.3,showlegend=False),row=2,col=3) 
 
                 fig_count.update_layout(template="plotly_dark", font_family="Arial",
-                                    margin=dict(l=20, r=20, t=20, b=20), width=50, height=200)
+                                    margin=dict(l=0, r=0, t=0, b=0), width=100, height=100)
+                
+                
+
+                fig_count1.update_layout(legend=dict(x=0.5,xanchor="right",yanchor="top",y=0),template="plotly_dark", font_family="Arial",
+                                    margin=dict(l=0, r=0, t=0, b=0), width=300, height=200,
+                                    # annotations=[dict(text='Run status',x=0.18, y=0.4,font_size=18),
+                                    #              dict(text='Run status',x=0.51, y=0.4,font_size=18),
+                                    #              dict(text='Run status',x=0.845, y=0.4,font_size=18)]
+                                                 )
+                
+                
+                
                 st.plotly_chart(fig_count, use_container_width=True)
+                cols=st.columns(3)
+                for i,name in zip(cols,["DEV","UAT","PROD"]):
+                    i.markdown("<h4 style='color: #908b8b';font_family='Arial'; align='center'>"+"Run status",unsafe_allow_html=True)
+                st.plotly_chart(fig_count1, use_container_width=True)
         else:
             st.warning("Please login to access this page")               
     else:
