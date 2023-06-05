@@ -118,7 +118,8 @@ def proc_call(sql_query: str,usrname):
     input_params=input,#,'warehouse':st.session_state.whname,'role':st.session_state.role
     use_browser=browser)
     cursor=snowflake_connector.cursor()
-    cursor.execute_async(sql_query)
+    # cursor.execute_async(sql_query)
+    cursor.execute(sql_query,_no_results=True)
 
 @st.cache_data(ttl=60*60,show_spinner=False)
 def runquery(sql_query: str,usrname):

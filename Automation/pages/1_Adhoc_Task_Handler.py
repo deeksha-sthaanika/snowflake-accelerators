@@ -179,10 +179,16 @@ try:
 
             tab1,tab3,tab2 = st.tabs(["RUN JOB","AUDIT JOB LOGS","STAGE JOB FILES"])
             with tab1:
-                SCRIPT_NAME=sql.SCRIPT_NAME
+                
+                c1,c2,c3,c4=st.columns([2,2,1,1])
+                with c1:
+                    env=st.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"]) 
+                    db=sql.DB_DICT[env]
+                    client_db=sql.CLIENT_DB_DICT[env]
+
+                SCRIPT_NAME=sql.SCRIPT_NAME.format(arg1='_'+db)
                 script_name=fn.get_query_data(SCRIPT_NAME,st.session_state.usrname)
 
-                c1,c2,c3,c4=st.columns([2,2,1,1])
                 with c2:
                     script_selected = st.selectbox('Select Script Name',script_name['SCRIPT_NAME'].unique(),key='s3')
                     script_sel='\''+ '\',\''.join(map(str, script_selected)) +'\''
@@ -234,15 +240,14 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     if runid_all:
-                        STORED_PROC=sql.STORED_PROC.format(arg2=script_selected,arg3=batch_id)
+                        STORED_PROC=sql.STORED_PROC.format(arg1='_'+db,arg2=script_selected,arg3=batch_id,arg4=client_db)
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC,st.session_state.usrname)
                             st.write("Executed "+script_selected)
                             st.info(df["SP_JOB_SCRIPT"][0])             
                     else:
-                        runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
-                    
-                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg2=script_selected,arg3=runid_sel,arg4=batch_id)
+                        runid_sel='[\''+ '\',\''.join(map(str, runid_sel)) +'\']'
+                        STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_ARR.format(arg1='_'+db,arg2=script_selected,arg3=runid_sel,arg4=batch_id,arg5=client_db)
                         with st.spinner("Executing script in Snowflake"):
                             df=fn.get_query_data(STORED_PROC_RUN_ID_ARR,st.session_state.usrname)
                             #st.write(df)
@@ -253,7 +258,7 @@ try:
                     df_batch_id=fn.get_query_data(BATCH_ID_SEQ,st.session_state.usrname)
                     batch_id=df_batch_id.iloc[0][0]
                     for i in runid_sel:
-                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg2=script_selected,arg3=i,arg4=batch_id)
+                        STORED_PROC_RUN_ID=sql.STORED_PROC_RUN_ID.format(arg1='_'+db,arg2=script_selected,arg3=i,arg4=batch_id,arg5=client_db)
                         fn.proc_call(STORED_PROC_RUN_ID,st.session_state.usrname)
                         #st.write(df)
                     # st.write("Executed "+script_selected+" with run id "+str(i))
@@ -262,19 +267,26 @@ try:
                 try:
                     c1,c2,c3=st.columns([2,2,2])
 
-                    STAGE_NAME=sql.STAGE_NAME
-                    df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
-                    # st.write(df_stage_name)
-                    df_stage_name=df_stage_name[(df_stage_name["type"]=='INTERNAL')&(df_stage_name["owner"]!='APPADMIN')]
-                    # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
+                    # STAGE_NAME=sql.STAGE_NAME
+                    # df_stage_name=fn.get_query_data(STAGE_NAME,st.session_state.usrname)
+                    # # st.write(df_stage_name)
+                    # df_stage_name=df_stage_name[(df_stage_name["type"]=='INTERNAL')&(df_stage_name["owner"]!='APPADMIN')]
+                    # # df_stage_name=df_stage_name[~df_stage_name["name"].str.contains('BLOBS')]
 
-                    sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
+                    # sel_db=c1.selectbox("Select Database",df_stage_name["database_name"].unique(),key='s6')
 
-                    df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
-                    sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
+                    # df_database=df_stage_name[df_stage_name["database_name"]==sel_db]
+                    # sel_schema=c2.selectbox("Select Schema",df_database["schema_name"].unique(),key='s7')
                     
-                    df_schema=df_database[df_database["schema_name"]==sel_schema]
-                    selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
+                    # df_schema=df_database[df_database["schema_name"]==sel_schema]
+                    # selc_stage=c3.selectbox("Select Internal Stage",df_schema["name"],key='s5')
+                    # db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
+
+                    env=c1.selectbox("Select Env",["SAND BOX","DEV","UAT","PROD"],key='s8')
+                    stage_env=sql.DB_DICT[env]
+                    sel_db=sql.DB_NAME
+                    sel_schema=sql.SCHEMA_NAME
+                    selc_stage='INT_STAGE_'+stage_env
                     db_schema_stage='"'+sel_db+'"."'+sel_schema+'"."'+selc_stage+'"'
 
                     STAGE_FILES=sql.STAGE_FILES.format(arg2=db_schema_stage)
@@ -305,6 +317,7 @@ try:
                             dl_stage_files=fn.get_query_data(GET_STAGE_FILE,st.session_state.usrname)
 
                             ip=dl_stage_files["file"].iloc[0]
+                            
                             if str(ip).endswith(".gz"):
                                 op = open(dl_stage_files["file"].iloc[0].split('.gz')[0],"w")
                                 try:
@@ -314,6 +327,10 @@ try:
                                     # os.remove(dl_stage_files["file"].iloc[0])
 
                                     with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "rb") as file:
+                                        with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "r") as f:
+                                            with st.expander("🔎 Zoom into stage files in detail"):
+                                                content=f.read()
+                                                st.code(content,'sql')
                                         st.download_button(
                                                 label="Download File",
                                                 data=file,
@@ -330,6 +347,10 @@ try:
 
                             else:
                                 with open(dl_stage_files["file"].iloc[0], "rb") as file:
+                                    with open(dl_stage_files["file"].iloc[0].split('.gz')[0], "r") as f:
+                                            with st.expander("🔎 Zoom into stage files in detail"):
+                                                content=f.read()
+                                                st.code(content,'sql')
                                     st.download_button(
                                             label="Download File",
                                             data=file,
@@ -344,10 +365,15 @@ try:
 
 
             with tab3:
-                c1,c2,c3=st.columns([2,3,2])
+                # c1,c2,c3=st.columns([2,3,2])
+                c1,c2,c3,c4=st.columns([2,2,1,1])
+                with c1:
+                    env=st.selectbox("Select Env ",["SAND BOX","DEV","UAT","PROD"]) 
+                    db_audit=sql.DB_DICT[env]
+
                 aud_script_sel = c2.selectbox('Select Script Name',script_name['SCRIPT_NAME'].unique(),key='s4')
                 aud_script_sel='\''+ aud_script_sel +'\''
-                AUDIT_LOGS=sql.AUDIT_LOGS.format(arg2=aud_script_sel)
+                AUDIT_LOGS=sql.AUDIT_LOGS.format(arg2=aud_script_sel,arg1='_'+db_audit)
                 df_audit_logs=fn.get_query_data(AUDIT_LOGS,st.session_state.usrname)
                 log_inf=c2.empty()
                 log_inf.info("Select checkbox to download")
