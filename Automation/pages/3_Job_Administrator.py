@@ -493,7 +493,7 @@ try:
                             st.write(df_script_sel)
 
                         runid_sel=st.multiselect("Select Sequence Id",df_script_sel["SEQ_ID"],df_script_sel["SEQ_ID"].iloc[0])
-                        runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
+                        #runid_sel='\''+ '\',\''.join(map(str, runid_sel)) +'\''
                         
                         #STORED_PROC_RUN_ID_TASK=sql.STORED_PROC_RUN_ID_TASK.format(arg2=script_selected,arg3=runid_sel)
                         STORED_PROC_RUN_ID_ARR=sql.STORED_PROC_RUN_ID_TASK.format(arg1=common_db,arg2=script_selected,arg3=runid_sel,arg4=client_db)
