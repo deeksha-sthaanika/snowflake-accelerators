@@ -130,7 +130,7 @@ try:
 
             df_total_dbs= fn.sql_to_dataframe(sql.TOTAL_DBS)
             df_total_tables= fn.sql_to_dataframe(sql.TOTAL_TABLES)
-            df_failed_login= fn.sql_to_dataframe(sql.FAILED_LOGIN_ATTEMPTS)
+            #df_failed_login= fn.sql_to_dataframe(sql.FAILED_LOGIN_ATTEMPTS)
 
             #col1,col2,col3,col4,col5=st.columns([4,2,2,2,4])
             col1,col2,col3,col4=st.columns([4,2,2,4])
