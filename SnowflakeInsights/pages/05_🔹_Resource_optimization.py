@@ -160,7 +160,7 @@ def main():
                 
                 tab1,tab2,tab3=st.tabs(["Setup & Configuration","Billing Metrics","Performance"])
                 with tab1:              
-                    Option_list=["Idle Roles","Idle Users","Idle Warehouses","Users Never Logged In","Warehouses Without Auto-Resume","Warehouses Without Auto-Suspend",
+                    Option_list=["Idle Roles","Idle Users","Idle Warehouses","Users Never Logged In","Failed User Login Attempts","Warehouses Without Auto-Resume","Warehouses Without Auto-Suspend",
                                 "Warehouses With Long Suspension","Warehouses Without Resource Monitors"]
                     sel_opt=st.selectbox("Select Option",Option_list,key='op1')
                     if sel_opt == "Warehouses Without Auto-Resume":
@@ -199,14 +199,20 @@ def main():
                             date_from=date_from,
                             date_to=date_to))
                         
-                    elif sel_opt == "Idle Roles":
+                    elif sel_opt == "Failed User Login Attempts":
                         date_from, date_to = date_selection('d3')
+                        df_setup = fn.sql_to_dataframe(sql.FAILED_LOGIN_ATTEMPTS.format(
+                            date_from=date_from,
+                            date_to=date_to))
+                        
+                    elif sel_opt == "Idle Roles":
+                        date_from, date_to = date_selection('d4')
                         df_setup = fn.sql_to_dataframe(sql.IDLE_ROLES.format(
                             date_from=date_from,
                             date_to=date_to))
                         
                     else:
-                        date_from, date_to = date_selection('d4')
+                        date_from, date_to = date_selection('d5')
                         # WAREHOUSE=sql.WAREHOUSE
                         # df_warehouse=fn.get_model_run_date(WAREHOUSE)
                         df_setup = fn.sql_to_dataframe(sql.IDLE_WAREHOUSES.format(
@@ -323,10 +329,10 @@ def main():
                                     mime='text/csv',
                                 ) 
                 with tab3:
-                    performance_opt=["Data Ingest With Snowpipe","Full Table Scans","Heavy Scanners","Queries By WarehouseSize",
+                    performance_opt=["Data Ingest With Snowpipe or Copy Into","Full Table Scans","Heavy Scanners","Queries By WarehouseSize",
                                      "Top 10 Spillers Remote","Warehouse Cache Usage"]
                     sel_perf=st.selectbox("Select Option",performance_opt,key='op3')
-                    if sel_perf == 'Data Ingest With Snowpipe':
+                    if sel_perf == 'Data Ingest With Snowpipe or Copy Into':
                         df_performance = fn.sql_to_dataframe(sql.DATA_INGEST_WI_SNOWPIPE)
 
                     elif sel_perf == 'Full Table Scans':

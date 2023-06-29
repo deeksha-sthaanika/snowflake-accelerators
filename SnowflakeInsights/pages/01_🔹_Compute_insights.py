@@ -250,7 +250,7 @@ def main():
                             date_column="START_TIME",
                         )
                         fig = px.bar(df_resampled, x='START_TIME', y='CREDITS_USED')
-                        fig.update_layout(xaxis_title='START TIME',yaxis_title='CREDITS USED',width=1400)
+                        fig.update_layout(xaxis_title='DATE',yaxis_title='CREDITS USED',width=1400)
                         st.write(fig)
                         # Bar chart
                         # bar_chart = charts.get_bar_chart(
@@ -392,12 +392,12 @@ def main():
                     with col2:
                         format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='r2')
                     if format1 == 'Graph form':
-                        fig = px.line(warehouse_usage_hr, x="START_TIME", y="CREDITS_USED_COMPUTE",markers=True,custom_data=["WAREHOUSE_NAME"]).update_traces(hovertemplate='WAREHOUSE = %{customdata[0]}<br>TIMESTAMP = %{x}<br>CREDITS USED = %{y}<br><extra></extra>')
+                        fig = px.line(warehouse_usage_hr, x="START_TIME", y="CREDITS_USED_COMPUTE",markers=True,custom_data=["WAREHOUSE_NAME"]).update_traces(hovertemplate='WAREHOUSE = %{customdata[0]}<br>TIMESTAMP = %{x}<br>CREDITS USED = %{y:.5f}<br><extra></extra>')
                         fig.update_layout(xaxis_title='TIMESTAMP',yaxis_title='CREDITS USED',width=1400,height=500)
                         st.write(fig)
                     else:
                         dl1,dl2=st.columns([6,1])
-                        warehouse_usage_hr["CREDITS_USED_COMPUTE"]=warehouse_usage_hr["CREDITS_USED_COMPUTE"].map("{:.2f}".format)
+                        warehouse_usage_hr["CREDITS_USED_COMPUTE"]=warehouse_usage_hr["CREDITS_USED_COMPUTE"].map("{:.5f}".format)
                         csv=warehouse_usage_hr.to_csv().encode('utf-8')
                         with dl2:st.download_button(label="Download Table",data=csv,file_name='Average Hour-By-Hour Consumption.csv',mime='text/csv')
                         st.table(warehouse_usage_hr.head(20))
@@ -426,6 +426,7 @@ def main():
                         csv=avg_query_volume.to_csv().encode('utf-8')
                         with dl2:st.download_button(label="Download Table",data=csv,file_name='Average Query Volume By Hour.csv',mime='text/csv')
                         st.table(avg_query_volume.head(20))
+                    st.markdown("""<hr style="height:2px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
                     
                     st.markdown("<h4 style='text-align: center; color: black;'>Daily Credits By Type</h4>", unsafe_allow_html=True)
                     c1,c2,c3,c4=st.columns([2,2,2,2])
