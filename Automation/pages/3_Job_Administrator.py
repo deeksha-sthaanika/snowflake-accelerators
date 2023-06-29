@@ -679,25 +679,28 @@ try:
                 PARENT_TASK=sql.PARENT_TASK
                 df_parent=fn.get_query_data(PARENT_TASK,st.session_state.usrname)
                 df_parent["WITH_SCHEMA_NAME"]=df_parent["schema_name"]+'.'+df_parent["name"]
-
-                task_name=st.selectbox("Choose Tasks",df_parent["WITH_SCHEMA_NAME"])
-                c1, c2, c3 = st.columns([4,2,4])
-                btn=c2.empty()
-                res=False
-                sus=False
                 
-                if df_parent[df_parent["WITH_SCHEMA_NAME"]==task_name].state.iloc[0]=='suspended':
-                    res=btn.button("Resume")
+                if len(df_parent)>0:
+                    task_name=st.selectbox("Choose Tasks",df_parent["WITH_SCHEMA_NAME"])
+                    c1, c2, c3 = st.columns([4,2,4])
+                    btn=c2.empty()
+                    res=False
+                    sus=False
+                    
+                    if df_parent[df_parent["WITH_SCHEMA_NAME"]==task_name].state.iloc[0]=='suspended':
+                        res=btn.button("Resume")
+                    else:
+                        sus=btn.button("Suspend")
+                    if res:
+                        RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
+                        df_res=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
+                        st.success("Resumed "+task_name)
+                    if sus:
+                        SUSPEND_TASK=sql.SUSPEND_TASK.format(arg2=task_name)
+                        df_res=fn.get_query_data(SUSPEND_TASK,st.session_state.usrname)
+                        st.success("Suspended "+task_name)
                 else:
-                    sus=btn.button("Suspend")
-                if res:
-                    RESUME_TASK=sql.RESUME_TASK.format(arg2=task_name)
-                    df_res=fn.get_query_data(RESUME_TASK,st.session_state.usrname)
-                    st.success("Resumed "+task_name)
-                if sus:
-                    SUSPEND_TASK=sql.SUSPEND_TASK.format(arg2=task_name)
-                    df_res=fn.get_query_data(SUSPEND_TASK,st.session_state.usrname)
-                    st.success("Suspended "+task_name)
+                    st.warning("No tasks available")
 
             with tab6:
 

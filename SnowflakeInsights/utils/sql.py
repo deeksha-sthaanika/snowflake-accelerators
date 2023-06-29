@@ -2,7 +2,7 @@ QUERIES_QUERY = """
 select *
 from snowflake.account_usage.query_history
 where START_TIME >= convert_timezone('UTC', 'UTC', ('{date_from}T00:00:00Z')::timestamp_ltz)
-and START_TIME < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timestamp_ltz) order by START_TIME DESC limit 1000;
+and START_TIME < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timestamp_ltz) order by TOTAL_ELAPSED_TIME DESC limit 1000;
 """
 
 QUERIES_COUNT_QUERY = """
@@ -38,11 +38,24 @@ and start_time < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timesta
 group by 1, 2, 3;
 """
 
+# WAREHOUSE_USAGE_HOURLY = """
+# // Credits used by [hour, warehouse] (past 7 days)
+# select START_TIME ,
+#        WAREHOUSE_NAME ,
+#        ROUND(CREDITS_USED_COMPUTE,3) as CREDITS_USED_COMPUTE
+# from SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
+# where START_TIME >= convert_timezone('UTC', 'UTC', ('{date_from}T00:00:00Z')::timestamp_ltz)
+#   and start_time < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timestamp_ltz)
+#   and WAREHOUSE_ID > 0 // Skip pseudo-VWs such as "CLOUD_SERVICES_ONLY"
+# order by 1 desc,
+#          2
+# """
+
 WAREHOUSE_USAGE_HOURLY = """
 // Credits used by [hour, warehouse] (past 7 days)
 select START_TIME ,
        WAREHOUSE_NAME ,
-       ROUND(CREDITS_USED_COMPUTE,3) as CREDITS_USED_COMPUTE
+       ROUND(CREDITS_USED,5) as CREDITS_USED_COMPUTE
 from SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
 where START_TIME >= convert_timezone('UTC', 'UTC', ('{date_from}T00:00:00Z')::timestamp_ltz)
   and start_time < convert_timezone('UTC', 'UTC', ('{date_to}T00:00:00Z')::timestamp_ltz)
@@ -201,7 +214,12 @@ USERS_NEVER_LOGGED_IN="""SELECT USER_ID,NAME,CREATED_ON,DELETED_ON,LOGIN_NAME,DI
 COMMENT,DISABLED,DEFAULT_WAREHOUSE,DEFAULT_ROLE,LAST_SUCCESS_LOGIN,EXPIRES_AT,
 LOCKED_UNTIL_TIME,OWNER FROM SNOWFLAKE.ACCOUNT_USAGE.USERS 
 WHERE LAST_SUCCESS_LOGIN IS NULL"""
- 
+
+FAILED_LOGIN_ATTEMPTS="""select user_name,client_ip,reported_client_type,error_message,event_timestamp
+from snowflake.account_usage.login_history
+where IS_SUCCESS = 'NO' and event_timestamp >= CONVERT_TIMEZONE('UTC', 'UTC', ('{date_from}T00:00:00Z')::TIMESTAMP_LTZ)
+AND event_timestamp < CONVERT_TIMEZONE('UTC', 'UTC', ('{date_to}T00:00:00Z')::TIMESTAMP_LTZ)"""
+
 IDLE_ROLES="""SELECT R.* FROM SNOWFLAKE.ACCOUNT_USAGE.ROLES R
 LEFT JOIN (
     SELECT DISTINCT 
@@ -445,9 +463,10 @@ TOTAL_DBS="""select count(1) as db_count from snowflake.account_usage.databases 
 
 TOTAL_TABLES="""select count(1) as table_count from snowflake.account_usage.tables where deleted is null"""
 
-FAILED_LOGIN_ATTEMPTS="""select sum(case when IS_SUCCESS = 'NO' then 1 else 0 end ) / count(1) *100 as failed 
-from snowflake.account_usage.login_history
-where EVENT_TIMESTAMP >= DATE_TRUNC('year', current_date())"""
+# FAILED_LOGIN_ATTEMPTS="""select sum(case when IS_SUCCESS = 'NO' then 1 else 0 end ) / count(1) *100 as failed 
+# from snowflake.account_usage.login_history
+# where EVENT_TIMESTAMP >= DATE_TRUNC('year', current_date())"""
+
 
 YTD_AVG_STORAGE="""select avg(storage_bytes)/1000/1000 as storage
 ,avg(stage_bytes)/1000/1000 as stage
