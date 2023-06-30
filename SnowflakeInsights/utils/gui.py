@@ -80,7 +80,7 @@ def date_selector() -> Tuple[datetime.date, datetime.date]:
         index = DATE_RANGE_OPTIONS.index(st.session_state.date_range)
     else:
         index = 0
-
+    
     date_range = st.selectbox(
         "Date range",
         options=[
@@ -121,13 +121,17 @@ def date_selector() -> Tuple[datetime.date, datetime.date]:
         )
 
     if date_range == "Custom":
-        date_from, date_to = st.date_input(
-            "Choose start and end date",
-            value=value,
-            key="custom",
-        )
-
-    st.caption(f"Your selection is from **{date_from}** to **{date_to}**")
+        try:
+            date_from, date_to = st.date_input(
+                "Choose start and end date",
+                value=value,
+                key="custom",
+            )
+            st.caption(f"Your selection is from **{date_from}** to **{date_to}**")
+        except:
+            st.warning("Select both start and end date")
+            date_from=0
+            date_to=0
 
     return date_from, date_to
 

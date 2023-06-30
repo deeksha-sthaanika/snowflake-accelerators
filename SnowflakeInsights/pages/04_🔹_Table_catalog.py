@@ -171,5 +171,8 @@ try:
             st.warning("Please login to access this page") 
     else:
         st.warning("Please login to access this page")
-except AttributeError:
-    st.warning("Please login to access this page")
+except Exception as e:
+    if str(e).__contains__('success_param'):
+        st.error("Please login to access this page")
+    else:
+        st.error(e)
