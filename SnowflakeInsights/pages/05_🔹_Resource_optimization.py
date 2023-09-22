@@ -345,7 +345,7 @@ def main():
                         with col2:
                             format1 = st.radio('Choose a Visual',('Graph form', 'Tabular form'),horizontal=True,key='rb1')
                         if format1 == 'Graph form':
-                            fig = px.bar(df_full_table_scan, x='USER_NAME', y='COUNT_OF_QUERIES')
+                            fig = px.bar(df_full_table_scan, x='USER_NAME', y='COUNT_OF_QUERIES',hover_data=['REF_QUERY_IDS'])
                             fig.update_layout(xaxis_title='USERNAME',yaxis_title='QUERIES COUNT',width=1400,height=500)
                             st.write(fig)
                         else:
